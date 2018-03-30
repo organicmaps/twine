@@ -7,6 +7,14 @@ module Twine
     class Android < Abstract
       include Twine::Placeholders
 
+      LANG_CODES = Hash[
+        'zh' => 'zh-Hans',
+        'zh-CN' => 'zh-Hans',
+        'zh-HK' => 'zh-Hant',
+        'en-GB' => 'en-GB',
+        'in' => 'id'
+      ]
+
       def format_name
         'android'
       end
@@ -33,7 +41,10 @@ module Twine
             # see http://developer.android.com/guide/topics/resources/providing-resources.html#AlternativeResources
             match = /^values-([a-z]{2}(-r[a-z]{2})?)$/i.match(segment)
 
-            return match[1].sub('-r', '-') if match
+            if match
+              lang = match[1].sub('-r', '-')
+              return LANG_CODES.fetch(lang, lang)
+            end
           end
         end
 
