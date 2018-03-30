@@ -3,6 +3,7 @@ require 'fileutils'
 module Twine
   module Formatters
     class Abstract
+      SUPPORTS_PLURAL = false
       LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE = "[a-z]{2}(?:-[A-Za-z]{2})?"
 
       attr_accessor :twine_file
@@ -139,7 +140,13 @@ module Twine
       end
 
       def format_definition(definition, lang)
-        [format_comment(definition, lang), format_key_value(definition, lang)].compact.join
+        formatted_definition = [format_comment(definition, lang)]
+        if self.class::SUPPORTS_PLURAL && definition.is_plural?
+          formatted_definition << format_plural(definition, lang)
+        else
+          formatted_definition << format_key_value(definition, lang)
+        end
+        formatted_definition.compact.join
       end
 
       def format_comment(definition, lang)
@@ -150,8 +157,19 @@ module Twine
         key_value_pattern % { key: format_key(definition.key.dup), value: format_value(value.dup) }
       end
 
+      def format_plural(definition, lang)
+        plural_hash = definition.plural_translation_for_lang(lang)
+        if plural_hash
+          format_plural_keys(definition.key.dup, plural_hash)
+        end
+      end
+
       def key_value_pattern
         raise NotImplementedError.new("You must implement key_value_pattern in your formatter class.")
+      end
+
+      def format_plural_keys(key, plural_hash)
+        raise NotImplementedError.new("You must implement format_plural_keys in your formatter class.")
       end
 
       def format_key(key)

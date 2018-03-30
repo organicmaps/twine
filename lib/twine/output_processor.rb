@@ -43,6 +43,14 @@ module Twine
             new_definition = definition.dup
             new_definition.translations[language] = value
 
+            if definition.is_plural?
+              # If definition is plural, but no translation found -> create
+              # Then check 'other' key
+              if !(new_definition.plural_translations[language] ||= {}).key? 'other'
+                new_definition.plural_translations[language]['other'] = value
+              end
+            end
+
             new_section.definitions << new_definition
             result.definitions_by_key[new_definition.key] = new_definition
           end

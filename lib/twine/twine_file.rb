@@ -1,9 +1,13 @@
 module Twine
   class TwineDefinition
+    PLURAL_KEYS = %w(zero one two few many other)
+
     attr_reader :key
     attr_writer :comment
     attr_accessor :tags
     attr_reader :translations
+    attr_reader :plural_translations
+    attr_reader :is_plural
     attr_accessor :reference
     attr_accessor :reference_key
 
@@ -12,6 +16,7 @@ module Twine
       @comment = nil
       @tags = nil
       @translations = {}
+      @plural_translations = {}
     end
 
     def comment
@@ -49,6 +54,16 @@ module Twine
       translation = reference.translation_for_lang(lang) if translation.nil? && reference
 
       return translation
+    end
+
+    def plural_translation_for_lang(lang)
+      if @plural_translations.has_key? lang
+        @plural_translations[lang].dup
+      end
+    end
+
+    def is_plural?
+      !@plural_translations.empty?
     end
   end
 
@@ -137,11 +152,12 @@ module Twine
               parsed = true
             end
           else
-            match = /^([^=]+)=(.*)$/.match(line)
+            match = /^([^:=]+)(?::([^=]+))?=(.*)$/.match(line)
             if match
               key = match[1].strip
-              value = match[2].strip
-              
+              plural_key = match[2].to_s.strip
+              value = match[3].strip
+
               value = value[1..-2] if value[0] == '`' && value[-1] == '`'
 
               case key
@@ -155,7 +171,18 @@ module Twine
                 if !@language_codes.include? key
                   add_language_code(key)
                 end
-                current_definition.translations[key] = value
+                # Providing backward compatibility
+                # for formatters without plural support
+                if plural_key.empty? || plural_key == 'other'
+                  current_definition.translations[key] = value
+                end
+                if !plural_key.empty?
+                  if !TwineDefinition::PLURAL_KEYS.include? plural_key
+                    warn("Unknown plural key #{plural_key}")
+                    next
+                  end
+                  (current_definition.plural_translations[key] ||= {})[plural_key] = value
+                end
               end
               parsed = true
             end
