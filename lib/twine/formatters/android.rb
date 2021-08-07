@@ -119,7 +119,7 @@ module Twine
 
       def format_plural_keys(key, plural_hash)
         result = "\t<plurals name=\"#{key}\">\n"
-        result += plural_hash.map{|quantity,value| "\t#{' ' * 2}<item quantity=\"#{quantity}\">#{value}</item>"}.join("\n")
+        result += plural_hash.map{|quantity,value| "\t#{' ' * 2}<item quantity=\"#{quantity}\">#{escape_value(value)}</item>"}.join("\n")
         result += "\n\t</plurals>"
       end
 
