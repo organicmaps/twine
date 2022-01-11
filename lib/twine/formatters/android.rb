@@ -12,8 +12,10 @@ module Twine
         'zh' => 'zh-Hans',
         'zh-CN' => 'zh-Hans',
         'zh-HK' => 'zh-Hant',
-        'en-GB' => 'en-GB',
-        'in' => 'id'
+        # See https://developer.android.com/reference/java/util/Locale#legacy-language-codes
+        'iw' => 'he',
+        'in' => 'id',
+        'ji' => 'yi'
       ]
 
       def format_name
