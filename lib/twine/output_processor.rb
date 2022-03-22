@@ -22,7 +22,7 @@ module Twine
           generic_language = language.gsub(/([a-zA-Z])-[a-zA-Z]+/, '\1')
         end
 
-        [generic_language, fallback_mapping[language], default_language].flatten.compact
+        [fallback_mapping[language], generic_language, default_language].flatten.compact
       end
 
       def process(language)
