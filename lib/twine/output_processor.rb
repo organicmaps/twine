@@ -17,7 +17,12 @@ module Twine
           'zh-TW' => 'zh-Hant' # if we don't have a zh-TW translation, try zh-Hant before en
         }
 
-        [fallback_mapping[language], default_language].flatten.compact
+        # Regional dialect fallbacks to generic language (for example: 'es-MX' to 'es' instead of default 'en').
+        if language.match(/([a-zA-Z])-[a-zA-Z]+/)
+          generic_language = language.gsub(/([a-zA-Z])-[a-zA-Z]+/, '\1')
+        end
+
+        [fallback_mapping[language], generic_language, default_language].flatten.compact
       end
 
       def process(language)
