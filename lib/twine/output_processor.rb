@@ -17,7 +17,7 @@ module Twine
           'zh-TW' => 'zh-Hant' # if we don't have a zh-TW translation, try zh-Hant before en
         }
 
-        # regional dialect fallback to generic language (for example: 'es-MX' to 'es')
+        # Regional dialect fallbacks to generic language (for example: 'es-MX' to 'es' instead of default 'en').
         if language.match(/([a-zA-Z])-[a-zA-Z]+/)
           generic_language = language.gsub(/([a-zA-Z])-[a-zA-Z]+/, '\1')
         end
