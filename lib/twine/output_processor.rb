@@ -18,7 +18,7 @@ module Twine
         }
 
         # Regional dialect fallbacks to generic language (for example: 'es-MX' to 'es' instead of default 'en').
-        if language.match(/([a-zA-Z])-[a-zA-Z]+/)
+        if language.match(/([a-zA-Z]{2})-[a-zA-Z]+/)
           generic_language = language.gsub(/([a-zA-Z])-[a-zA-Z]+/, '\1')
         end
 
