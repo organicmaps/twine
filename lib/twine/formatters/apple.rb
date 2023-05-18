@@ -1,6 +1,8 @@
 module Twine
   module Formatters
     class Apple < Abstract
+      include Twine::Placeholders
+
       def format_name
         'apple'
       end
@@ -84,6 +86,8 @@ module Twine
       end
 
       def format_value(value)
+        # Replace Android's %s with iOS %@
+        value = convert_placeholders_from_android_to_twine(value)
         escape_quotes(value)
       end
 
