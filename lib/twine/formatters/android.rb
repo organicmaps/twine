@@ -108,21 +108,25 @@ module Twine
       end
 
       def format_section_header(section)
-        "\t<!-- SECTION: #{section.name} -->"
+        "#{space(4)}<!-- SECTION: #{section.name} -->"
       end
 
       def format_comment(definition, lang)
-        "\t<!-- #{definition.comment.gsub('--', '—')} -->\n" if definition.comment
+        "#{space(4)}<!-- #{definition.comment.gsub('--', '—')} -->\n" if definition.comment
       end
 
       def key_value_pattern
-        "\t<string name=\"%{key}\">%{value}</string>"
+        "#{space(4)}<string name=\"%{key}\">%{value}</string>"
       end
 
       def format_plural_keys(key, plural_hash)
-        result = "\t<plurals name=\"#{key}\">\n"
-        result += plural_hash.map{|quantity,value| "\t#{' ' * 2}<item quantity=\"#{quantity}\">#{escape_value(value)}</item>"}.join("\n")
-        result += "\n\t</plurals>"
+        result = "#{space(4)}<plurals name=\"#{key}\">\n"
+        result += plural_hash.map{|quantity,value| "#{space(8)}<item quantity=\"#{quantity}\">#{escape_value(value)}</item>"}.join("\n")
+        result += "\n#{space(4)}</plurals>"
+      end
+
+      def space(level)
+        ' ' * level
       end
 
       def gsub_unless(text, pattern, replacement)
