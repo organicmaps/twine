@@ -18,7 +18,7 @@ module Twine
       end
 
       def format_footer(lang)
-        footer = "</dict>\n</plist>"
+        footer = "</dict>\n</plist>\n"
       end
 
       def format_file(lang)
