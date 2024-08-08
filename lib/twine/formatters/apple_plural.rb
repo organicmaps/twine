@@ -37,21 +37,21 @@ module Twine
       end
 
       def format_plural_keys(key, plural_hash)
-        result = "#{tab(2)}<key>#{key}</key>\n"
-        result += "#{tab(2)}<dict>\n"
-        result += "#{tab(4)}<key>NSStringLocalizedFormatKey</key>\n"
-        result += "#{tab(4)}<string>\%\#@value@</string>\n"
-        result += "#{tab(4)}<key>value</key>\n"
-        result += "#{tab(4)}<dict>\n"
-        result += "#{tab(6)}<key>NSStringFormatSpecTypeKey</key>\n"
-        result += "#{tab(6)}<string>NSStringPluralRuleType</string>\n"
-        result += "#{tab(6)}<key>NSStringFormatValueTypeKey</key>\n"
-        "#{tab(6)}<string>d</string>\n"
+        result = "\t<key>#{key}</key>\n"
+        result += "\t<dict>\n"
+        result += "\t\t<key>NSStringLocalizedFormatKey</key>\n"
+        result += "\t\t<string>\%\#@value@</string>\n"
+        result += "\t\t<key>value</key>\n"
+        result += "\t\t<dict>\n"
+        result += "\t\t\t<key>NSStringFormatSpecTypeKey</key>\n"
+        result += "\t\t\t<string>NSStringPluralRuleType</string>\n"
+        result += "\t\t\t<key>NSStringFormatValueTypeKey</key>\n"
+        result += "\t\t\t<string>d</string>\n"
         # Replace Android's %s with iOS %@
-        result += plural_hash.map{|quantity,value| "#{tab(6)}<key>#{quantity}</key>\n#{tab(6)}<string>#{convert_placeholders_from_android_to_twine(value)}</string>"}.join("\n")
+        result += plural_hash.map{|quantity,value| "\t\t\t<key>#{quantity}</key>\n\t\t\t<string>#{convert_placeholders_from_android_to_twine(value)}</string>"}.join("\n")
         result += "\n"
-        result += "#{tab(4)}</dict>\n"
-        result += "#{tab(2)}</dict>\n"
+        result += "\t\t</dict>\n"
+        result += "\t</dict>\n"
       end
 
       def format_comment(definition, lang)
@@ -60,10 +60,6 @@ module Twine
 
       def read(io, lang)
         raise NotImplementedError.new("Reading \".stringdict\" files not implemented yet")
-      end
-
-      def tab(level)
-        ' ' * level
       end
 
       def should_include_definition(definition, lang)
