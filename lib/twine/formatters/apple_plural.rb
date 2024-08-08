@@ -18,7 +18,7 @@ module Twine
       end
 
       def format_footer(lang)
-        footer = "</dict>\n</plist>\n"
+        footer = "\n</dict>\n</plist>\n"
       end
 
       def format_file(lang)
@@ -50,7 +50,7 @@ module Twine
         result += plural_hash.map{|quantity,value| "\t\t\t<key>#{quantity}</key>\n\t\t\t<string>#{convert_placeholders_from_android_to_twine(value)}</string>"}.join("\n")
         result += "\n"
         result += "\t\t</dict>\n"
-        result += "\t</dict>\n"
+        result += "\t</dict>"
       end
 
       def format_comment(definition, lang)
