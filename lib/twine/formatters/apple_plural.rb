@@ -33,7 +33,6 @@ module Twine
       end
 
       def format_section_header(section)
-        "<!-- ********** #{section.name} **********/ -->\n"
       end
 
       def format_plural_keys(key, plural_hash)
