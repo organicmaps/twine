@@ -58,7 +58,7 @@ module Twine
 
     def plural_translation_for_lang(lang)
       if @plural_translations.has_key? lang
-        @plural_translations[lang].dup
+        @plural_translations[lang].dup.sort_by { |key,_| TwineDefinition::PLURAL_KEYS.index(key) }.to_h
       end
     end
 
