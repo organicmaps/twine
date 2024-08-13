@@ -196,6 +196,14 @@ module Twine
         value.gsub(/\A *| *\z/) { |spaces| '\u0020' * spaces.length }
       end
 
+      def should_include_definition(definition, lang)
+        if definition.is_plural?
+          return !definition.plural_translation_for_lang(lang).nil?
+        else
+          return !definition.translation_for_lang(lang).nil?
+        end
+      end
+
     end
   end
 end
