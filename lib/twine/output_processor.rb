@@ -50,8 +50,8 @@ module Twine
 
             if definition.is_plural?
               # If definition is plural, but no translation found -> create
-              # Then check 'other' key
-              if !(new_definition.plural_translations[language] ||= {}).key? 'other'
+              # and add 'other' key
+              if (new_definition.plural_translations[language] ||= {}).empty?
                 new_definition.plural_translations[language]['other'] = value
               end
             end
