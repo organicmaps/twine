@@ -66,7 +66,7 @@ module Twine
       end
 
       def format_section_header(section)
-        "\n/********** #{section.name} **********/\n"
+        "\n/********** #{section.name} **********/"
       end
 
       def key_value_pattern
