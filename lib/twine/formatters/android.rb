@@ -96,7 +96,7 @@ module Twine
       end
 
       def format_header(lang)
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
       end
 
       def format_sections(twine_file, lang)

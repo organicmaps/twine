@@ -103,7 +103,7 @@ module Twine
 
         header = format_header(lang)
         result = ""
-        result += header + "\n" if header
+        result += header if header
         result += format_sections(processed_twine_file, lang)
       end
 
