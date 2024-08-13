@@ -21,11 +21,6 @@ module Twine
         footer = "\n</dict>\n</plist>\n"
       end
 
-      def format_file(lang)
-        result = super
-        result += format_footer(lang)
-      end
-
       def format_header(lang)
         header =  "<\?xml version=\"1.0\" encoding=\"UTF-8\"\?>\n"
         header += "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"

@@ -65,6 +65,15 @@ module Twine
         end
       end
 
+      def format_footer(lang)
+        "\n"
+      end
+
+      def format_file(lang)
+        result = super
+        result += format_footer(lang)
+      end
+
       def format_section_header(section)
         "\n/********** #{section.name} **********/"
       end
