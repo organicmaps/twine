@@ -100,7 +100,7 @@ module Twine
       end
 
       def format_sections(twine_file, lang)
-        result = '<resources>'
+        result = "<resources>\n"
         
         result += super + "\n"
 
