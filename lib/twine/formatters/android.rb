@@ -160,6 +160,7 @@ module Twine
           angle_bracket = /<(?!(\/?(b|em|i|cite|dfn|big|small|font|tt|s|strike|del|u|super|sub|ul|li|br|div|span|p|a|\!\[CDATA)))/
         end
         value = gsub_unless(value, angle_bracket, '&lt;') { |substring| substring =~ inside_cdata }
+        value = gsub_unless(value, '\n', "\n\\n") { |substring| substring =~ inside_cdata }
 
         # escape non resource identifier @ signs (http://developer.android.com/guide/topics/resources/accessing-resources.html#ResourcesFromXml)
         resource_identifier_regex = /@(?!([a-z\.]+:)?[a-z+]+\/[a-zA-Z_]+)/   # @[<package_name>:]<resource_type>/<resource_name>
