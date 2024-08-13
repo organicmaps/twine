@@ -70,7 +70,7 @@ module Twine
       end
 
       def key_value_pattern
-        "\"%{key}\" = \"%{value}\";\n"
+        "\"%{key}\" = \"%{value}\";"
       end
 
       def format_comment(definition, lang)
