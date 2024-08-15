@@ -39,13 +39,19 @@ module Twine
       def format_plural_keys(key, plural_hash)
         result = "#{tab(2)}<key>#{key}</key>\n"
         result += "#{tab(2)}<dict>\n"
-        result += "#{tab(4)}<key>NSStringLocalizedFormatKey</key>\n#{tab(4)}<string>\%\#@value@</string>\n"
-        result += "#{tab(4)}<key>value</key>\n#{tab(4)}<dict>\n"
-        result += "#{tab(6)}<key>NSStringFormatSpecTypeKey</key>\n#{tab(6)}<string>NSStringPluralRuleType</string>\n"
-        result += "#{tab(6)}<key>NSStringFormatValueTypeKey</key>\n#{tab(6)}<string>d</string>\n"
+        result += "#{tab(4)}<key>NSStringLocalizedFormatKey</key>\n"
+        result += "#{tab(4)}<string>\%\#@value@</string>\n"
+        result += "#{tab(4)}<key>value</key>\n"
+        result += "#{tab(4)}<dict>\n"
+        result += "#{tab(6)}<key>NSStringFormatSpecTypeKey</key>\n"
+        result += "#{tab(6)}<string>NSStringPluralRuleType</string>\n"
+        result += "#{tab(6)}<key>NSStringFormatValueTypeKey</key>\n"
+        "#{tab(6)}<string>d</string>\n"
         # Replace Android's %s with iOS %@
         result += plural_hash.map{|quantity,value| "#{tab(6)}<key>#{quantity}</key>\n#{tab(6)}<string>#{convert_placeholders_from_android_to_twine(value)}</string>"}.join("\n")
-        result += "\n#{tab(4)}</dict>\n#{tab(2)}</dict>\n"
+        result += "\n"
+        result += "#{tab(4)}</dict>\n"
+        result += "#{tab(2)}</dict>\n"
       end
 
       def format_comment(definition, lang)
