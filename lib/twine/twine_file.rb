@@ -213,7 +213,7 @@ module Twine
           f.puts "[[#{section.name}]]"
 
           section.definitions.each do |definition|
-            f.puts "#{space(2)}[#{definition.key}]"
+            f.puts "\n#{space(2)}[#{definition.key}]"
 
             if definition.raw_comment and definition.raw_comment.length > 0
               f.puts "#{space(4)}comment = #{definition.raw_comment}"
