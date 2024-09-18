@@ -232,7 +232,15 @@ module Twine
             end
 
             @language_codes[1..-1].each do |lang|
-              write_value(definition, lang, f)
+              if lang =~ /^#{dev_lang}/
+                write_value(definition, lang, f)
+              end
+            end
+
+            @language_codes[1..-1].each do |lang|
+              if not lang =~ /^#{dev_lang}/
+                write_value(definition, lang, f)
+              end
             end
           end
         end
