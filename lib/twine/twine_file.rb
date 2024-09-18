@@ -215,15 +215,15 @@ module Twine
           section.definitions.each do |definition|
             f.puts "#{space(2)}[#{definition.key}]"
 
-            if definition.reference_key
-              f.puts "#{space(4)}ref = #{definition.reference_key}"
+            if definition.raw_comment and definition.raw_comment.length > 0
+              f.puts "#{space(4)}comment = #{definition.raw_comment}"
             end
             if definition.tags && definition.tags.length > 0
               tag_str = definition.tags.join(',')
               f.puts "#{space(4)}tags = #{tag_str}"
             end
-            if definition.raw_comment and definition.raw_comment.length > 0
-              f.puts "#{space(4)}comment = #{definition.raw_comment}"
+            if definition.reference_key
+              f.puts "#{space(4)}ref = #{definition.reference_key}"
             end
 
             value = write_value(definition, dev_lang, f)
