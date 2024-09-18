@@ -213,7 +213,7 @@ module Twine
           f.puts "[[#{section.name}]]"
 
           section.definitions.each do |definition|
-            f.puts "\t[#{definition.key}]"
+            f.puts "#{space(2)}[#{definition.key}]"
 
             value = write_value(definition, dev_lang, f)
             if !value && !definition.reference_key
@@ -221,14 +221,14 @@ module Twine
             end
             
             if definition.reference_key
-              f.puts "\t\tref = #{definition.reference_key}"
+              f.puts "#{space(4)}ref = #{definition.reference_key}"
             end
             if definition.tags && definition.tags.length > 0
               tag_str = definition.tags.join(',')
-              f.puts "\t\ttags = #{tag_str}"
+              f.puts "#{space(4)}tags = #{tag_str}"
             end
             if definition.raw_comment and definition.raw_comment.length > 0
-              f.puts "\t\tcomment = #{definition.raw_comment}"
+              f.puts "#{space(4)}comment = #{definition.raw_comment}"
             end
             @language_codes[1..-1].each do |lang|
               write_value(definition, lang, f)
@@ -248,9 +248,14 @@ module Twine
         value = '`' + value + '`'
       end
 
-      file.puts "\t\t#{language} = #{value}"
+      file.puts "#{space(4)}#{language} = #{value}"
       return value
     end
+
+    def space(level)
+        ' ' * level
+    end
+
 
   end
 end
