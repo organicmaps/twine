@@ -65,16 +65,21 @@ module Twine
         end
       end
 
+      def format_file(lang)
+        result = super
+        result += "\n"
+      end
+
       def format_section_header(section)
-        "/********** #{section.name} **********/\n"
+        "\n/********** #{section.name} **********/\n"
       end
 
       def key_value_pattern
-        "\"%{key}\" = \"%{value}\";\n"
+        "\"%{key}\" = \"%{value}\";"
       end
 
       def format_comment(definition, lang)
-        "/* #{definition.comment.gsub('*/', '* /')} */\n" if definition.comment
+        "\n/* #{definition.comment.gsub('*/', '* /')} */\n" if definition.comment
       end
 
       def format_key(key)
