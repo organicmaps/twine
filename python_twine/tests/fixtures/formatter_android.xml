@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SECTION: Section 1 -->
+    <!-- comment key1 -->
+    <string name="key1">value1-english</string>
+    <string name="key2">value2-english</string>
+
+    <!-- SECTION: Section 2 -->
+    <string name="key3">value3-english</string>
+    <!-- comment key4 -->
+    <string name="key4">value4-english</string>
+</resources>
