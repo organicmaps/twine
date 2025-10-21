@@ -50,13 +50,13 @@ class FlashFormatter(AbstractFormatter):
 
             # Match comment line
             comment_match = re.match(r"# *(.*)", line)
-            section_match = re.match(r"## *(.*) *##", line)
-            if comment_match:
-                last_comment = comment_match.group(1)
-            elif section_match:
+            section_match = re.match(r"## +(.*) +##", line)
+            if section_match:
                 current_section = section_match.group(1)
                 # Reset comment on a new section start
                 last_comment = None
+            elif comment_match:
+                last_comment = comment_match.group(1)
             elif not key_value_match:
                 # Reset comment if line doesn't match key=value
                 last_comment = None

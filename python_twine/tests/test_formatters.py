@@ -7,14 +7,44 @@ from pathlib import Path
 
 import pytest
 
+from twine.formatters.django import DjangoFormatter
+from twine.formatters.flash import FlashFormatter
 from twine.twine_file import TwineFile, TwineSection, TwineDefinition
 from twine.formatters.android import AndroidFormatter
 from twine.formatters.apple import AppleFormatter
 from twine.formatters.gettext import GettextFormatter
 from twine.formatters.jquery import JQueryFormatter
 
+class FormatterTestData:
+    def check_test_keys(self, twine_file: TwineFile):
+        # Check translations in twine_file
+        for i in range(1, 5):
+            key = f"key{i}"
+            assert key in twine_file.definitions_by_key
+            assert (
+                    twine_file.definitions_by_key[key].translations["en"]
+                    == f"value{i}-english"
+            )
 
-class TestAndroidFormatter:
+    def check_test_comments(self, twine_file: TwineFile):
+        # Check comments
+        assert twine_file.definitions_by_key["key1"].comment == "comment key1"
+        assert twine_file.definitions_by_key["key4"].comment == "comment key4"
+
+    def check_test_sections(self, twine_file: TwineFile):
+        # Check sections
+        assert len(twine_file.sections) == 2
+        assert {s.name for s in twine_file.sections} == {"Section 1", "Section 2"}
+
+        # Pick "Section 1" by name and check included keys
+        section1 = next(s for s in twine_file.sections if s.name == "Section 1")
+        assert [d.key for d in section1.definitions] == ["key1", "key2"]
+
+        # Pick "Section 2" by name and check included keys
+        section2 = next(s for s in twine_file.sections if s.name == "Section 2")
+        assert [d.key for d in section2.definitions] == ["key3", "key4"]
+
+class TestAndroidFormatter(FormatterTestData):
     """Test Android XML formatter."""
 
     @pytest.fixture
@@ -38,17 +68,13 @@ class TestAndroidFormatter:
             formatter.read(f, "en")
 
         # Check translations were read
-        for i in range(1, 5):
-            key = f"key{i}"
-            assert key in formatter.twine_file.definitions_by_key
-            assert (
-                formatter.twine_file.definitions_by_key[key].translations["en"]
-                == f"value{i}-english"
-            )
+        self.check_test_keys(formatter.twine_file)
 
-        # Check comments
-        assert formatter.twine_file.definitions_by_key["key1"].comment == "comment key1"
-        assert formatter.twine_file.definitions_by_key["key4"].comment == "comment key4"
+        # Check loaded comments
+        self.check_test_comments(formatter.twine_file)
+
+        # Check sections
+        self.check_test_sections(formatter.twine_file)
 
     def test_read_multiline_translation(self, formatter):
         """Test reading multiline translations."""
@@ -209,7 +235,7 @@ class TestAndroidFormatter:
         cdata = '<![CDATA[ New\\nline\n ]]>'
         assert formatter.escape_value(cdata) == cdata
 
-class TestAppleFormatter:
+class TestAppleFormatter(FormatterTestData):
     """Test Apple .strings formatter."""
 
     @pytest.fixture
@@ -231,19 +257,14 @@ class TestAppleFormatter:
         fixture_path = fixtures_dir / "formatter_apple.strings"
         with open(fixture_path, "r", encoding="utf-8") as f:
             formatter.read(f, "en")
-
         # Check translations were read
-        for i in range(1, 5):
-            key = f"key{i}"
-            assert key in formatter.twine_file.definitions_by_key
-            assert (
-                formatter.twine_file.definitions_by_key[key].translations["en"]
-                == f"value{i}-english"
-            )
+        self.check_test_keys(formatter.twine_file)
 
-        # Check comments
-        assert formatter.twine_file.definitions_by_key["key1"].comment == "comment key1"
-        assert formatter.twine_file.definitions_by_key["key4"].comment == "comment key4"
+        # Check loaded comments
+        self.check_test_comments(formatter.twine_file)
+
+        # Check sections
+        self.check_test_sections(formatter.twine_file)
 
     def test_format_file(self, formatter):
         """Test generating Apple .strings output."""
@@ -264,8 +285,7 @@ class TestAppleFormatter:
         assert "/* A greeting */" in output
         assert '"greeting" = "Hello World";' in output
 
-
-class TestGettextFormatter:
+class TestGettextFormatter(FormatterTestData):
     """Test Gettext .po formatter."""
 
     @pytest.fixture
@@ -287,15 +307,14 @@ class TestGettextFormatter:
         fixture_path = fixtures_dir / "formatter_gettext.po"
         with open(fixture_path, "r", encoding="utf-8") as f:
             formatter.read(f, "en")
-
         # Check translations were read
-        for i in range(1, 5):
-            key = f"key{i}"
-            assert key in formatter.twine_file.definitions_by_key
-            assert (
-                formatter.twine_file.definitions_by_key[key].translations["en"]
-                == f"value{i}-english"
-            )
+        self.check_test_keys(formatter.twine_file)
+
+        # Check loaded comments
+        self.check_test_comments(formatter.twine_file)
+
+        # Check sections
+        self.check_test_sections(formatter.twine_file)
 
     def test_read_multiline_po(self, formatter, fixtures_dir):
         """Test reading multiline Gettext format."""
@@ -306,8 +325,71 @@ class TestGettextFormatter:
         # Should have read multiline string correctly
         assert len(formatter.twine_file.definitions_by_key) > 0
 
+class TestDjangoFormatter(FormatterTestData):
+    """Test Django .po formatter."""
 
-class TestJQueryFormatter:
+    @pytest.fixture
+    def formatter(self):
+        """Create formatter with empty TwineFile."""
+        twine_file = TwineFile()
+        formatter = DjangoFormatter()
+        formatter.twine_file = twine_file
+        formatter.options = {"consume_all": True, "consume_comments": True}
+        return formatter
+
+    @pytest.fixture
+    def fixtures_dir(self):
+        """Get fixtures directory path."""
+        return Path(__file__).parent / "fixtures"
+
+    def test_read_format(self, formatter, fixtures_dir):
+        """Test reading Gettext .po format."""
+        fixture_path = fixtures_dir / "formatter_django.po"
+        with open(fixture_path, "r", encoding="utf-8") as f:
+            formatter.read(f, "en")
+
+        # Check translations were read
+        self.check_test_keys(formatter.twine_file)
+
+        # Check loaded comments
+        self.check_test_comments(formatter.twine_file)
+
+        # Check sections
+        self.check_test_sections(formatter.twine_file)
+
+class TestFlashFormatter(FormatterTestData):
+    """Test Flash .properties formatter."""
+
+    @pytest.fixture
+    def formatter(self):
+        """Create formatter with empty TwineFile."""
+        twine_file = TwineFile()
+        formatter = FlashFormatter()
+        formatter.twine_file = twine_file
+        formatter.options = {"consume_all": True, "consume_comments": True}
+        return formatter
+
+    @pytest.fixture
+    def fixtures_dir(self):
+        """Get fixtures directory path."""
+        return Path(__file__).parent / "fixtures"
+
+    def test_read_format(self, formatter, fixtures_dir):
+        """Test reading Gettext .po format."""
+        fixture_path = fixtures_dir / "formatter_flash.properties"
+        with open(fixture_path, "r", encoding="utf-8") as f:
+            formatter.read(f, "en")
+
+        # Check translations were read
+        self.check_test_keys(formatter.twine_file)
+
+        # Check loaded comments
+        self.check_test_comments(formatter.twine_file)
+
+        # Check sections
+        self.check_test_sections(formatter.twine_file)
+
+class TestJQueryFormatter(FormatterTestData):
     """Test jQuery JSON formatter."""
 
     @pytest.fixture
@@ -331,13 +413,7 @@ class TestJQueryFormatter:
             formatter.read(f, "en")
 
         # Check translations were read
-        for i in range(1, 5):
-            key = f"key{i}"
-            assert key in formatter.twine_file.definitions_by_key
-            assert (
-                formatter.twine_file.definitions_by_key[key].translations["en"]
-                == f"value{i}-english"
-            )
+        self.check_test_keys(formatter.twine_file)
 
     def test_read_nested_format(self, formatter, fixtures_dir):
         """Test reading nested jQuery JSON format."""
