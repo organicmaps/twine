@@ -67,7 +67,11 @@ module Twine
 
       def format_file(lang)
         result = super
-        result += "\n"
+        if result.nil?
+          result
+        else
+          result + "\n"
+        end
       end
 
       def format_section_header(section)

@@ -14,7 +14,7 @@ module Twine
       end
 
       def determine_language_given_path(path)
-        match = /^.+([a-z]{2}-[A-Z]{2})\.json$/.match File.basename(path)
+        match = /^.*-([a-z]{2})(-[A-Z]{2})?\.json$/.match File.basename(path)
         return match[1] if match
 
         return super
