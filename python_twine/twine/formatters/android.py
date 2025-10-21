@@ -8,6 +8,7 @@ from typing import Dict, Optional, TextIO
 from xml.etree import ElementTree as ET
 
 from twine.formatters import AbstractFormatter
+from twine.formatters.tools import replace_with_filter
 from twine.placeholders import (
     convert_placeholders_from_android_to_twine,
     convert_placeholders_from_twine_to_android,
@@ -43,7 +44,7 @@ class AndroidFormatter(AbstractFormatter):
 
         try:
             entries = os.listdir(path)
-            return any(re.match(r"^values.*$", item) for item in entries)
+            return any(item.startswith("values") for item in entries)
         except (OSError, IOError):
             return False
 
@@ -214,50 +215,20 @@ class AndroidFormatter(AbstractFormatter):
             match = re.search(r"<(a|font|span|p)\s+[^>]*$", before)
             return match is not None
 
-        # Escape quotes and ampersands
-        result = value
-
         # Escape double quotes (unless in CDATA or opening tag)
-        new_result = []
-        i = 0
-        while i < len(result):
-            if result[i] == '"':
-                if not (inside_cdata(result, i) or inside_opening_tag(result, i)):
-                    new_result.append('\\"')
-                else:
-                    new_result.append('"')
-            else:
-                new_result.append(result[i])
-            i += 1
-        result = "".join(new_result)
+        result = replace_with_filter(value, '"', '\\"',
+            lambda i: not (inside_cdata(value, i) or inside_opening_tag(value, i))
+        )
 
         # Escape single quotes (unless in CDATA)
-        new_result = []
-        i = 0
-        while i < len(result):
-            if result[i] == "'":
-                if not inside_cdata(result, i):
-                    new_result.append("\\'")
-                else:
-                    new_result.append("'")
-            else:
-                new_result.append(result[i])
-            i += 1
-        result = "".join(new_result)
+        result = replace_with_filter(result, "'", "\\'",
+            lambda i: not inside_cdata(result, i)
+        )
 
         # Escape ampersands (unless in CDATA or opening tag)
-        new_result = []
-        i = 0
-        while i < len(result):
-            if result[i] == "&":
-                if not (inside_cdata(result, i) or inside_opening_tag(result, i)):
-                    new_result.append("&amp;")
-                else:
-                    new_result.append("&")
-            else:
-                new_result.append(result[i])
-            i += 1
-        result = "".join(new_result)
+        result = replace_with_filter(result, "&", "&amp;",
+            lambda i: not (inside_cdata(result, i) or inside_opening_tag(result, i))
+        )
 
         # Escape angle brackets based on placeholder presence
         has_placeholders = number_of_twine_placeholders(value) > 0
@@ -268,43 +239,24 @@ class AndroidFormatter(AbstractFormatter):
         else:
             # Escape < except supported tags
             angle_bracket_regex = re.compile(
-                r"<(?!(\/?(b|em|i|cite|dfn|big|small|font|tt|s|strike|del|u|super|sub|ul|li|br|div|span|p|a|\!\[CDATA)))"
+                r"<(?!(\/?(b|em|i|cite|dfn|big|small|font|tt|s|strike|del|u|super|sub|ul|li|br|div|span|p|a|\!\[CDATA))\b)"
             )
 
-        new_result = []
-        i = 0
-        while i < len(result):
-            if result[i] == "<":
-                if not inside_cdata(result, i):
-                    # Check if this < should be escaped
-                    remaining = result[i:]
-                    if angle_bracket_regex.match(remaining):
-                        new_result.append("&lt;")
-                    else:
-                        new_result.append("<")
-                else:
-                    new_result.append("<")
-            else:
-                new_result.append(result[i])
-            i += 1
-        result = "".join(new_result)
+        def is_non_tag(result:str, i:int):
+            if inside_cdata(result, i):
+                return False
+            # Check if this '<' isn't a known tag
+            remaining = result[i:]
+            return angle_bracket_regex.match(remaining) #is not None
+
+        result = replace_with_filter(result, "<", "&lt;",
+            lambda i: is_non_tag(result, i)
+        )
 
         # Escape newlines (unless in CDATA)
-        new_result = []
-        i = 0
-        while i < len(result):
-            if result[i : i + 2] == "\\n":
-                if not inside_cdata(result, i):
-                    new_result.append("\n\\n")
-                    i += 2
-                    continue
-                else:
-                    new_result.append("\\n")
-                    i += 2
-                    continue
-            new_result.append(result[i])
-            i += 1
-        result = "".join(new_result)
+        result = replace_with_filter(result, "\\n", "\n\\n",
+            lambda i: not inside_cdata(result, i)
+        )
 
         # Escape @ signs that aren't resource identifiers
         resource_identifier_regex = re.compile(r"@(?!([a-z\.]+:)?[a-z+]+\/[a-zA-Z_]+)")

@@ -4,7 +4,7 @@ jQuery-localize JSON formatter.
 
 import json
 import re
-from typing import Any, Dict, Optional, TextIO
+from typing import Any, Optional, TextIO
 
 from twine.formatters import AbstractFormatter
 

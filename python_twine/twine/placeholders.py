@@ -3,7 +3,6 @@ Placeholder conversion utilities for different localization formats.
 """
 
 import re
-from typing import Optional
 
 
 # Note: the ` ` (single space) flag is NOT supported

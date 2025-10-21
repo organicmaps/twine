@@ -2,11 +2,8 @@
 Runner orchestrates command execution for Twine.
 """
 
-import os
-import sys
 from pathlib import Path
 from typing import Optional, Dict, Any
-from io import StringIO
 
 import twine
 from twine.twine_file import TwineFile
@@ -50,6 +47,8 @@ class Runner:
             twine_file_path = self.options.get("twine_file")
             if twine_file_path:
                 self.twine_file.read(twine_file_path)
+                if self.options.get("developer_language"):
+                    self.twine_file.set_developer_language_code(self.options.get("developer_language"))
 
         # Dispatch to appropriate method
         method_name = command.replace("-", "_")
@@ -326,7 +325,6 @@ class Runner:
 
     def _prepare_read_write(self, path: str, lang: Optional[str]):
         """Prepare formatter and language for read/write operations."""
-        from pathlib import Path
 
         # Get formatter
         formatter = self._get_formatter()

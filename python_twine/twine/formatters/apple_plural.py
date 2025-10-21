@@ -2,7 +2,6 @@
 Apple .stringsdict formatter for plural localization.
 """
 
-import re
 from typing import Dict, Optional, TextIO
 from xml.etree import ElementTree as ET
 
@@ -27,10 +26,10 @@ class ApplePluralFormatter(AppleFormatter):
 
     def format_header(self, lang: str) -> str:
         """Generate plist XML header."""
-        header = '<?xml version="1.0" encoding="UTF-8"?>\n'
-        header += '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
-        header += '<plist version="1.0">\n<dict>'
-        return header
+        return '''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>'''
 
     def format_footer(self, lang: str) -> str:
         """Generate plist XML footer."""
@@ -57,16 +56,17 @@ class ApplePluralFormatter(AppleFormatter):
 
     def format_plural_keys(self, key: str, plural_hash: Dict[str, str]) -> str:
         """Format plural entries in stringsdict format."""
-        result = f"\t<key>{key}</key>\n"
-        result += "\t<dict>\n"
-        result += "\t\t<key>NSStringLocalizedFormatKey</key>\n"
-        result += "\t\t<string>%#@value@</string>\n"
-        result += "\t\t<key>value</key>\n"
-        result += "\t\t<dict>\n"
-        result += "\t\t\t<key>NSStringFormatSpecTypeKey</key>\n"
-        result += "\t\t\t<string>NSStringPluralRuleType</string>\n"
-        result += "\t\t\t<key>NSStringFormatValueTypeKey</key>\n"
-        result += "\t\t\t<string>d</string>\n"
+        result = f"""\t<key>{key}</key>
+\t<dict>
+\t\t<key>NSStringLocalizedFormatKey</key>
+\t\t<string>%#@value@</string>
+\t\t<key>value</key>
+\t\t<dict>
+\t\t\t<key>NSStringFormatSpecTypeKey</key>
+\t\t\t<string>NSStringPluralRuleType</string>
+\t\t\t<key>NSStringFormatValueTypeKey</key>
+\t\t\t<string>d</string>
+"""
 
         # Add plural entries
         for quantity, value in plural_hash.items():

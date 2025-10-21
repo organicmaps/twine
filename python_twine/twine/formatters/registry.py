@@ -2,7 +2,7 @@
 Formatter registry and management.
 """
 
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional
 from twine.formatters import AbstractFormatter
 
 

@@ -38,9 +38,8 @@ class AppleFormatter(AbstractFormatter):
         path_parts = Path(path).parts
 
         for segment in path_parts:
-            match = re.match(r"^(.+)\.lproj$", segment)
-            if match:
-                lang = match.group(1)
+            if segment.endswith(".lproj"):
+                lang = segment[:-6]
                 # Base.lproj is the developer language
                 if lang == "Base":
                     return self.options.get("developer_language")

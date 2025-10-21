@@ -3,7 +3,7 @@ Core data models for Twine.
 """
 
 import re
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 
 class TwineDefinition:
@@ -53,7 +53,7 @@ class TwineDefinition:
             True if the definition matches the tag criteria
         """
         # No tag filter specified - everything passes
-        if not tags or not tags:
+        if not tags:
             return True
 
         # Definition has no tags - check reference or include_untagged
@@ -80,7 +80,7 @@ class TwineDefinition:
 
         return True
 
-    def translation_for_lang(self, lang: str) -> Optional[str]:
+    def translation_for_lang(self, lang: str | List[str]) -> Optional[str]:
         """
         Get translation for a language, checking reference if not found.
 
@@ -92,9 +92,9 @@ class TwineDefinition:
         """
         # Handle both single lang and list of langs
         if isinstance(lang, list):
-            for l in lang:
-                if l in self.translations:
-                    return self.translations[l]
+            for ln in lang:
+                if ln in self.translations:
+                    return self.translations[ln]
             lang_to_check = lang
         else:
             if lang in self.translations:
@@ -158,22 +158,18 @@ class TwineFile:
         if not self.language_codes:
             self.language_codes.append(code)
         elif code not in self.language_codes:
-            dev_lang = self.language_codes[0]
-            self.language_codes.append(code)
-            self.language_codes.remove(dev_lang)
-            self.language_codes.sort()
-            self.language_codes.insert(0, dev_lang)
+            if len(self.language_codes) == 1:
+                # Just append `code`
+                self.language_codes.append(code)
+            else:
+                # Append `code` and sort languages from index 1
+                self.language_codes = [self.language_codes[0]] + sorted(self.language_codes[1:] + [code])
 
     def set_developer_language_code(self, code: str):
         """Set the developer language (moves it to position 0)."""
         if code in self.language_codes:
             self.language_codes.remove(code)
         self.language_codes.insert(0, code)
-
-    def _match_key(self, text: str) -> Optional[str]:
-        """Extract key from bracket notation [key]."""
-        match = re.match(r"^\[(.+)\]$", text)
-        return match.group(1) if match else None
 
     def read(self, path: str):
         """
@@ -207,16 +203,15 @@ class TwineFile:
 
                 # Section header [[Section Name]]
                 if len(line) > 4 and line.startswith("[["):
-                    match = re.match(r"^\[\[(.+)\]\]$", line)
-                    if match:
-                        current_section = TwineSection(match.group(1))
+                    if line.endswith(']]'):
+                        current_section = TwineSection(line[2:-2])
                         self.sections.append(current_section)
                         parsed = True
 
                 # Definition key [key]
                 elif len(line) > 2 and line.startswith("["):
-                    key = self._match_key(line)
-                    if key:
+                    if line.endswith(']'):
+                        key = line[1:-1]
                         current_definition = TwineDefinition(key)
                         self.definitions_by_key[key] = current_definition
 
@@ -308,15 +303,9 @@ class TwineFile:
                 for definition in section.definitions:
                     f.write(f"\t[{definition.key}]\n")
 
-                    # Write developer language first
-                    if dev_lang:
-                        value = self._write_value(definition, dev_lang, f)
-                        if not value and not definition.reference_key:
-                            print(
-                                f"WARNING: {definition.key} does not exist in "
-                                f"developer language '{dev_lang}'",
-                                file=twine.stdout,
-                            )
+                    # Write comment
+                    if definition.raw_comment:
+                        f.write(f"\t\tcomment = {definition.raw_comment}\n")
 
                     # Write reference
                     if definition.reference_key:
@@ -327,9 +316,15 @@ class TwineFile:
                         tag_str = ",".join(definition.tags)
                         f.write(f"\t\ttags = {tag_str}\n")
 
-                    # Write comment
-                    if definition.raw_comment:
-                        f.write(f"\t\tcomment = {definition.raw_comment}\n")
+                    # Write developer language first
+                    if dev_lang:
+                        value = self._write_value(definition, dev_lang, f)
+                        if not value and not definition.reference_key:
+                            print(
+                                f"WARNING: {definition.key} does not exist in "
+                                f"developer language '{dev_lang}'",
+                                file=twine.stdout,
+                            )
 
                     # Write other languages
                     for lang in self.language_codes[1:]:

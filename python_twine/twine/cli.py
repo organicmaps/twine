@@ -4,7 +4,7 @@ Command-line interface for Twine.
 
 import argparse
 import sys
-from pathlib import Path
+
 from typing import Optional, Dict, List
 
 from twine import __version__
@@ -186,11 +186,10 @@ class CLI:
         if "tags" in options and options["tags"]:
             # Convert list of tag strings to list of lists
             # Support tag syntax: tag1,tag2 for OR and multiple --tags for AND
-            tag_groups = []
+            tags = []
             for tag_group in options["tags"]:
-                tags = [t.strip() for t in tag_group.split(",")]
-                tag_groups.append(tags)
-            options["tags"] = tag_groups
+                tags += [t.strip() for t in tag_group.split(",")]
+            options["tags"] = tags
         else:
             options["tags"] = None
 
@@ -205,7 +204,9 @@ def main():
         try:
             runner.run()
         except Exception as e:
+            import traceback
             print(f"Error: {e}", file=sys.stderr)
+            traceback.print_exception(e)
             sys.exit(1)
 
 

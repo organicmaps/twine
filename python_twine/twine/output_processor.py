@@ -5,7 +5,7 @@ Output processor for filtering and processing Twine files.
 import re
 import copy
 from typing import Optional, List, Dict
-from twine.twine_file import TwineFile, TwineSection, TwineDefinition
+from twine.twine_file import TwineFile, TwineSection
 
 
 class OutputProcessor:

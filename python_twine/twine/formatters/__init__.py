@@ -4,8 +4,9 @@ Abstract base formatter for all localization format implementations.
 
 import os
 import re
+import sys
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, List, TextIO
+from typing import Optional, Dict, TextIO
 from pathlib import Path
 
 import twine
@@ -42,8 +43,7 @@ class AbstractFormatter(ABC):
         try:
             entries = os.listdir(path)
             ext = self.extension()
-            pattern = re.compile(rf".+{re.escape(ext)}$")
-            return any(pattern.match(item) for item in entries)
+            return any(item.endswith(ext) for item in entries)
         except (OSError, IOError):
             return False
 
@@ -117,6 +117,10 @@ class AbstractFormatter(ABC):
 
             # Only set if no reference or comment differs from reference
             if not reference or comment != reference.raw_comment:
+                if definition.comment is not None and definition.comment != comment:
+                    print(f"Warning: translation overrides comment '{definition.comment}' -> '{comment}'. "
+                          f"The same key '{key}' has different comments in some translations.",
+                          file=sys.stderr)
                 definition.comment = comment
 
     def determine_language_given_path(self, path: str) -> Optional[str]:
@@ -210,8 +214,7 @@ class AbstractFormatter(ABC):
         formatted_defs = [self.format_definition(d, lang) for d in definitions]
         formatted_defs = [d for d in formatted_defs if d]  # Remove None
 
-        for formatted_def in formatted_defs:
-            result += f"\n{formatted_def}"
+        result += "\n" + "\n".join(formatted_defs)
 
         return result
 
