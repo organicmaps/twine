@@ -24,24 +24,25 @@ class FlashFormatter(AbstractFormatter):
     def default_file_name(self) -> str:
         return "resources.properties"
 
-    def set_translation_for_key(self, key: str, lang: str, value: str):
+    def set_translation_for_key(self, key: str, lang: str, value: str, section_name: Optional[str]):
         """Convert Flash placeholders to Twine format."""
         value = convert_placeholders_from_flash_to_twine(value)
-        super().set_translation_for_key(key, lang, value)
+        super().set_translation_for_key(key, lang, value, section_name)
 
     def read(self, io: TextIO, lang: str):
         """Read Flash properties file."""
         last_comment = None
+        current_section = None
 
         for line in io:
             # Match key=value line (handles escaped characters)
-            match = re.match(r'((?:[^"\\]|\\.)+)\s*=\s*((?:[^"\\]|\\.)*)', line)
+            key_value_match = re.match(r'((?:[^"\\]|\\.)+)\s*=\s*((?:[^"\\]|\\.)*)', line)
 
-            if match:
-                key = match.group(1)
-                value = match.group(2).strip()
+            if key_value_match:
+                key = key_value_match.group(1)
+                value = key_value_match.group(2).strip()
 
-                self.set_translation_for_key(key, lang, value)
+                self.set_translation_for_key(key, lang, value, current_section)
 
                 if last_comment:
                     self.set_comment_for_key(key, last_comment)
@@ -49,9 +50,15 @@ class FlashFormatter(AbstractFormatter):
 
             # Match comment line
             comment_match = re.match(r"# *(.*)", line)
+            section_match = re.match(r"## *(.*) *##", line)
             if comment_match:
                 last_comment = comment_match.group(1)
-            elif not match:
+            elif section_match:
+                current_section = section_match.group(1)
+                # Reset comment on a new section start
+                last_comment = None
+            elif not key_value_match:
+                # Reset comment if line doesn't match key=value
                 last_comment = None
 
     def format_sections(self, twine_file, lang: str) -> str:

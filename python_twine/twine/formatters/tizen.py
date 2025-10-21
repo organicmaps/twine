@@ -77,9 +77,11 @@ class TizenFormatter(AbstractFormatter):
         key = None
         value = None
         comment = None
+        current_section = None
 
         key_regex = re.compile(r'<string name="(\w+)">')
         comment_regex = re.compile(r"<!-- (.*) -->")
+        section_regex = re.compile(r"<!-- SECTION: (.*) -->")
         value_regex = re.compile(r'<string name="\w+">(.*)</string>')
 
         for line in resources_content.split("\n"):
@@ -107,7 +109,7 @@ class TizenFormatter(AbstractFormatter):
                 else:
                     value = ""
 
-                self.set_translation_for_key(key, lang, value)
+                self.set_translation_for_key(key, lang, value, current_section)
 
                 if comment and not comment.startswith("SECTION:"):
                     self.set_comment_for_key(key, comment)
@@ -118,6 +120,12 @@ class TizenFormatter(AbstractFormatter):
             comment_match = comment_regex.search(line)
             if comment_match:
                 comment = comment_match.group(1)
+
+            # Check for section start
+            section_match = section_regex.search(line)
+            if section_match:
+                current_section = section_match.group(1)
+                comment = None
 
     def format_header(self, lang: str) -> str:
         """Generate Tizen XML header."""

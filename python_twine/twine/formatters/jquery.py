@@ -39,7 +39,7 @@ class JQueryFormatter(AbstractFormatter):
             for key2, value2 in value.items():
                 self.set_translation_for_key_recursive(f"{key}.{key2}", lang, value2)
         else:
-            self.set_translation_for_key(key, lang, str(value))
+            self.set_translation_for_key(key, lang, str(value), section_name=None)
 
     def read(self, io: TextIO, lang: str):
         """Read jQuery-localize JSON file."""

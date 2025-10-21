@@ -28,12 +28,14 @@ class GettextFormatter(AbstractFormatter):
     def read(self, io: TextIO, lang: str):
         """Read Gettext .po file."""
         comment_regex = re.compile(r'#\.\s*"(.*)"$', re.MULTILINE)
+        section_regex = re.compile(r'# SECTION: (.+)$', re.MULTILINE)
         key_regex = re.compile(r'msgctxt\s+"(.*)"$', re.MULTILINE)
         value_regex = re.compile(r'msgid\s+"(.*)"$', re.MULTILINE)
 
         # Read file in chunks separated by double newlines
         content = io.read()
         items = content.split("\n\n")
+        current_sections = None
 
         for item in items:
             if not item.strip() or item.startswith('msgid ""'):
@@ -47,6 +49,11 @@ class GettextFormatter(AbstractFormatter):
             comment_match = comment_regex.search(item)
             if comment_match:
                 comment = comment_match.group(1)
+
+            # Extract section
+            section_match = section_regex.search(item)
+            if section_match:
+                current_sections = section_match.group(1)
 
             # Extract key (msgctxt)
             key_match = key_regex.search(item)
@@ -63,7 +70,7 @@ class GettextFormatter(AbstractFormatter):
 
             # Set translation if we have both key and value
             if key and value:
-                self.set_translation_for_key(key, lang, value)
+                self.set_translation_for_key(key, lang, value, current_sections)
 
                 if comment and not comment.startswith("SECTION:"):
                     self.set_comment_for_key(key, comment)

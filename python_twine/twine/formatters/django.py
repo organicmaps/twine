@@ -27,18 +27,27 @@ class DjangoFormatter(AbstractFormatter):
     def read(self, io: TextIO, lang: str):
         """Read Django .po file."""
         comment_regex = re.compile(r'^\s*#\. *"?(.*)"?$')
+        section_regex = re.compile(r'^\s*# -{9} (.+) -{9} #$')
         key_regex = re.compile(r'^msgid *"(.*)"$')
         value_regex = re.compile(r'^msgstr *"(.*)"$', re.MULTILINE)
 
         key = None
         value = None
         comment = None
+        current_section = None
 
         for line in io:
             # Extract comment
             comment_match = comment_regex.match(line)
             if comment_match:
                 comment = comment_match.group(1)
+                continue
+
+            section_match = section_regex.match(line)
+            if section_match:
+                current_section = section_match.group(1)
+                comment = None
+                continue
 
             # Extract key (msgid)
             key_match = key_regex.match(line)
@@ -55,7 +64,7 @@ class DjangoFormatter(AbstractFormatter):
 
             # Process entry when we have both key and value
             if key and value:
-                self.set_translation_for_key(key, lang, value)
+                self.set_translation_for_key(key, lang, value, current_section)
 
                 if comment and not comment.startswith("--------- "):
                     self.set_comment_for_key(key, comment)
