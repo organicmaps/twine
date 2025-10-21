@@ -83,6 +83,7 @@ Twine uses `@` for string placeholders (iOS convention):
 ### Running Tests
 
 ```bash
+poetry install --extras dev
 pytest
 ```
 
