@@ -12,7 +12,6 @@ from twine.placeholders import (
     convert_placeholders_from_flash_to_twine,
     contains_python_specific_placeholder,
 )
-from twine import TwineError
 
 
 class TestPlaceholders:
