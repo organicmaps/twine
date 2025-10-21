@@ -3,12 +3,10 @@ Tests for core Twine data models.
 """
 
 import pytest
-from io import StringIO
 from pathlib import Path
 import tempfile
 
 from twine.twine_file import TwineFile, TwineDefinition, TwineSection
-from twine import TwineError
 
 
 class TestTwineDefinition:
@@ -108,6 +106,15 @@ class TestTwineFile:
         twine_file.add_language_code("en")
         assert twine_file.language_codes == ["en", "es"]
 
+        # Adding same language doesn't duplicate
+        twine_file.add_language_code("es")
+        assert twine_file.language_codes == ["en", "es"]
+
+        # Languages should be ordered except the first one
+        twine_file.add_language_code("de")
+        assert twine_file.language_codes == ["en", "de", "es"]
+
+
     def test_set_developer_language_code(self):
         """Test setting developer language."""
         twine_file = TwineFile()
@@ -116,6 +123,17 @@ class TestTwineFile:
         twine_file.set_developer_language_code("es")
         assert twine_file.language_codes[0] == "es"
         assert "en" in twine_file.language_codes
+        assert "fr" in twine_file.language_codes
+
+    def test_set_developer_language_code_insert(self):
+        """Test setting developer language."""
+        twine_file = TwineFile()
+        twine_file.language_codes = ["en", "es", "fr"]
+
+        twine_file.set_developer_language_code("uk")
+        assert twine_file.language_codes[0] == "uk"
+        assert "en" in twine_file.language_codes
+        assert "es" in twine_file.language_codes
         assert "fr" in twine_file.language_codes
 
     def test_read_simple_file(self):

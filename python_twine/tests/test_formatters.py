@@ -142,6 +142,72 @@ class TestAndroidFormatter:
             == "value %@"
         )
 
+    def test_writer_escape_ampersand(self, formatter):
+        """Test ampersand escaping."""
+        assert formatter.escape_value("&") == "&amp;"
+
+        value_with_link = '<a href="omaps.app/?lang=en&theme=dark">Home</a>'
+        assert formatter.escape_value(value_with_link) == value_with_link
+
+        assert (formatter.escape_value('<a href="omaps.app/?lang=en&theme=dark">Left & Right</a>')
+                == '<a href="omaps.app/?lang=en&theme=dark">Left &amp; Right</a>')
+
+        value_with_cdata = "<![CDATA[<html>bla & bla</html>]]>"
+        assert formatter.escape_value(value_with_cdata) == value_with_cdata
+
+        assert (formatter.escape_value("<![CDATA[<html>bla & bla</html>]]> & test")
+                == "<![CDATA[<html>bla & bla</html>]]> &amp; test")
+
+    def test_writer_escape_quote(self, formatter):
+        """Test ampersand escaping."""
+        assert formatter.escape_value('"') == '\\"'
+
+        assert (formatter.escape_value('<a href=\"omaps.app/?lang=en&theme=dark\">"Home"</a>')
+                == '<a href="omaps.app/?lang=en&theme=dark">\\"Home\\"</a>')
+
+        value_with_cdata = '<![CDATA["Back Home"]]>'
+        assert formatter.escape_value(value_with_cdata) == value_with_cdata
+
+        assert (formatter.escape_value('<![CDATA["Back Home"]]> & "Support"')
+                == '<![CDATA["Back Home"]]> &amp; \\"Support\\"')
+
+    def test_writer_escape_apostrophe(self, formatter):
+        """Test ampersand escaping."""
+        assert formatter.escape_value('"') == '\\"'
+
+        assert (formatter.escape_value('<a href=\"omaps.app/?lang=en&theme=dark\">"Home"</a>')
+                == '<a href="omaps.app/?lang=en&theme=dark">\\"Home\\"</a>')
+
+        value_with_cdata = '<![CDATA["Back Home"]]>'
+        assert formatter.escape_value(value_with_cdata) == value_with_cdata
+
+        assert (formatter.escape_value('<![CDATA["Back Home"]]> & "Support"')
+                == '<![CDATA["Back Home"]]> &amp; \\"Support\\"')
+
+    def test_writer_escape_angle_bracket(self, formatter):
+        """Test '<' escaping."""
+        assert formatter.escape_value('<') == '&lt;'
+
+        assert formatter.escape_value('<<< Turn Left') == '&lt;&lt;&lt; Turn Left'
+
+        assert formatter.escape_value('Turn Right >>>') == 'Turn Right >>>'
+
+        assert formatter.escape_value('<b>Home</b>') == '<b>Home</b>'
+        assert formatter.escape_value('e<super>x</super>') == 'e<super>x</super>'
+        assert formatter.escape_value('<script>alert("!")</script>') == '&lt;script>alert(\\"!\\")&lt;/script>'
+
+        value_with_cdata = '<![CDATA[Hello <1> world]]>'
+        assert formatter.escape_value(value_with_cdata) == value_with_cdata
+
+        assert formatter.escape_value('<![C DATA[ <![CDATA[') == '&lt;![C DATA[ <![CDATA['
+
+    def test_writer_escape_newline(self, formatter):
+        """Test '\\n' escaping."""
+        assert formatter.escape_value('\\n') == '\n\\n'
+        assert formatter.escape_value('Downloading %@. You can now\\nproceed to the map.') == 'Downloading %\\@. You can now\n\\nproceed to the map.'
+
+        cdata = '<![CDATA[ New\\nline\n ]]>'
+        assert formatter.escape_value(cdata) == cdata
 
 class TestAppleFormatter:
     """Test Apple .strings formatter."""

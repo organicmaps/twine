@@ -15,8 +15,8 @@ def test_complete_workflow():
     # Create a test Twine file
     twine_content = """[[General]]
 \t[hello]
-\t\ten = Hello World
-\t\tes = Hola Mundo
+\t\ten = Hello <a href="https://omaps.app/">World</a>
+\t\tes = Hola <a href="https://omaps.app/">Mundo</a>
 \t\tcomment = A greeting
 \t\ttags = common
 
@@ -41,7 +41,7 @@ def test_complete_workflow():
         assert len(twine_file.sections) == 2
         assert "hello" in twine_file.definitions_by_key
         assert (
-            twine_file.definitions_by_key["hello"].translations["en"] == "Hello World"
+            twine_file.definitions_by_key["hello"].translations["en"] == 'Hello <a href="https://omaps.app/">World</a>'
         )
         assert twine_file.definitions_by_key["hello"].comment == "A greeting"
 
@@ -55,7 +55,7 @@ def test_complete_workflow():
 
         android_output = android_fmt.format_file("en")
         assert "<?xml version=" in android_output
-        assert '<string name="hello">Hello World</string>' in android_output
+        assert '<string name="hello">Hello <a href="https://omaps.app/">World</a></string>' in android_output
 
         print("✓ Android formatter works")
 
@@ -65,7 +65,7 @@ def test_complete_workflow():
         apple_fmt.options = {}
 
         apple_output = apple_fmt.format_file("es")
-        assert '"hello" = "Hola Mundo";' in apple_output
+        assert '"hello" = "Hola <a href=\\"https://omaps.app/\\">Mundo</a>";' in apple_output
         assert '"goodbye" = "Adiós";' in apple_output
 
         print("✓ Apple formatter works")
@@ -76,7 +76,7 @@ def test_complete_workflow():
         jquery_fmt.options = {}
 
         jquery_output = jquery_fmt.format_file("en")
-        assert '"hello":"Hello World"' in jquery_output
+        assert '"hello":"Hello <a href=\\"https://omaps.app/\\">World</a>"' in jquery_output
 
         print("✓ jQuery formatter works")
 
