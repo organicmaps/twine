@@ -54,7 +54,7 @@ class AbstractFormatter(ABC):
             "You must implement default_file_name in your formatter class."
         )
 
-    def set_translation_for_key(self, key: str, lang: str, value: str):
+    def set_translation_for_key(self, key: str, lang: str, value: str, section_name:Optional[str]):
         """Set a translation value for a key in a specific language."""
         # Normalize newlines
         value = value.replace("\n", "\\n")
@@ -75,14 +75,7 @@ class AbstractFormatter(ABC):
         elif self.options.get("consume_all"):
             print(f"Adding new definition '{key}' to twine file.", file=twine.stdout)
 
-            # Find or create "Uncategorized" section
-            current_section = next(
-                (s for s in self.twine_file.sections if s.name == "Uncategorized"), None
-            )
-
-            if not current_section:
-                current_section = TwineSection("Uncategorized")
-                self.twine_file.sections.insert(0, current_section)
+            current_section = self.get_section_or_create(section_name or "Uncategorized")
 
             current_definition = TwineDefinition(key)
             current_section.definitions.append(current_definition)
@@ -100,6 +93,18 @@ class AbstractFormatter(ABC):
         # Add language code if not present
         if lang not in self.twine_file.language_codes:
             self.twine_file.add_language_code(lang)
+
+    def get_section_or_create(self, section_name) -> TwineSection:
+        # Find or create a section by name
+        section = next(
+            (s for s in self.twine_file.sections if s.name == section_name), None
+        )
+
+        if not section:
+            section = TwineSection(section_name)
+            self.twine_file.sections.insert(0, section)
+
+        return section
 
     def set_comment_for_key(self, key: str, comment: str):
         """Set a comment for a key."""

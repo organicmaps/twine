@@ -55,18 +55,19 @@ class AppleFormatter(AbstractFormatter):
     def read(self, io: TextIO, lang: str):
         """Read Apple .strings file."""
         last_comment = None
+        current_section = None
 
         for line in io:
             # Match: key = "value" or "key" = "value"
             # Key may be quoted or unquoted, value is always quoted
-            match = re.match(
+            key_value_match = re.match(
                 r'^\s*((?:"(?:[^"\\]|\\.)+")| (?:[^"\s=]+))\s*=\s*"((?:[^"\\]|\\.)*)"',
                 line,
             )
 
-            if match:
-                key = match.group(1).strip()
-                value = match.group(2)
+            if key_value_match:
+                key = key_value_match.group(1).strip()
+                value = key_value_match.group(2)
 
                 # Remove quotes from key if quoted
                 if key.startswith('"') and key.endswith('"'):
@@ -76,7 +77,7 @@ class AppleFormatter(AbstractFormatter):
                 key = key.replace('\\"', '"')
                 value = value.replace('\\"', '"')
 
-                self.set_translation_for_key(key, lang, value)
+                self.set_translation_for_key(key, lang, value, current_section)
 
                 if last_comment:
                     self.set_comment_for_key(key, last_comment)
@@ -84,9 +85,15 @@ class AppleFormatter(AbstractFormatter):
 
             # Match comments: /* comment */
             comment_match = re.match(r"/\* (.*) \*/", line)
+            section_match = re.match(r"/\*{10} (.+) \*{10}/", line)
             if comment_match:
                 last_comment = comment_match.group(1)
-            elif not match:  # Reset comment if line doesn't match key=value
+            elif section_match:
+                current_section = section_match.group(1)
+                # Reset comment on a new section start
+                last_comment = None
+            elif not key_value_match:
+                # Reset comment if line doesn't match key=value
                 last_comment = None
 
     def format_file(self, lang: str) -> Optional[str]:

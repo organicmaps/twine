@@ -84,7 +84,7 @@ class AndroidFormatter(AbstractFormatter):
             result = re.sub(r"-([A-Z])", r"-r\1", result)
             return result
 
-    def set_translation_for_key(self, key: str, lang: str, value: str):
+    def set_translation_for_key(self, key: str, lang: str, value: str, section_name: Optional[str]):
         """Set translation, handling Android-specific unescaping."""
         # Unescape HTML entities
         value = html.unescape(value)
@@ -106,7 +106,7 @@ class AndroidFormatter(AbstractFormatter):
 
         value = re.sub(r"(\\u0020)+", replace_spaces, value)
 
-        super().set_translation_for_key(key, lang, value)
+        super().set_translation_for_key(key, lang, value, section_name)
 
     def read(self, io: TextIO, lang: str):
         """Read Android XML strings file."""
@@ -122,14 +122,18 @@ class AndroidFormatter(AbstractFormatter):
             raise TwineError(f"Failed to parse XML: {e}")
 
         comment = None
+        current_section = None
 
         for child in root:
             # Handle comments (they have a callable tag function)
             if callable(child.tag):
                 content_text = child.text.strip() if child.text else ""
                 content_text = re.sub(r"\s+", " ", content_text)
-                if content_text and not content_text.startswith("SECTION:"):
-                    comment = content_text
+                if content_text:
+                    if content_text.startswith("SECTION:"):
+                        current_section = content_text[8:].strip()
+                    else:
+                        comment = content_text
 
             # Handle string elements
             elif child.tag == "string":
@@ -148,7 +152,7 @@ class AndroidFormatter(AbstractFormatter):
                 # Add tail text if any (text after the last child element)
                 # Note: child.tail is text AFTER the element, not inside
 
-                self.set_translation_for_key(key, lang, value)
+                self.set_translation_for_key(key, lang, value, current_section)
 
                 if comment:
                     self.set_comment_for_key(key, comment)
