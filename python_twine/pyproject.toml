@@ -32,6 +32,11 @@ dev = [
 [project.scripts]
 twine = "twine.cli:main"
 
+[tool.poetry]
+# This flag tells python that this project should not be installed aside with other dependencies.
+# Because twine is not installed using PIP tool.
+package-mode = false
+
 [tool.setuptools.packages.find]
 include = ["twine*"]
 exclude = ["tests*"]
