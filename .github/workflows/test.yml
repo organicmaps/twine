@@ -9,16 +9,15 @@ name: Test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master", "organicmaps" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master", "organicmaps" ]
 
 permissions:
   contents: read
 
 jobs:
-  test:
-
+  test-ruby:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,3 +34,24 @@ jobs:
       run: bundle install
     - name: Run tests
       run: bundle exec rake test
+  test-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: 'x64'
+      - name: Install dependencies
+        run: |
+          cd python_twine
+          pip install poetry
+          pip install ruff
+          poetry install --extras dev
+      - name: Lint code with Ruff
+        run: ruff check --output-format=github --target-version=py312
+      - name: Run unit-tests
+        run: |
+          cd python_twine
+          poetry run pytest
