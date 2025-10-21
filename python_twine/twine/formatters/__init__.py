@@ -94,11 +94,14 @@ class AbstractFormatter(ABC):
         if lang not in self.twine_file.language_codes:
             self.twine_file.add_language_code(lang)
 
-    def get_section_or_create(self, section_name) -> TwineSection:
+    def get_section(self, section_name) -> Optional[TwineSection]:
         # Find or create a section by name
-        section = next(
+        return next(
             (s for s in self.twine_file.sections if s.name == section_name), None
         )
+
+    def get_section_or_create(self, section_name) -> TwineSection:
+        section = self.get_section(section_name)
 
         if not section:
             section = TwineSection(section_name)
