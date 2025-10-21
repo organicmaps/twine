@@ -2,7 +2,6 @@
 Encoding utilities for detecting file encodings.
 """
 
-from pathlib import Path
 from typing import Optional
 
 

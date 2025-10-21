@@ -41,7 +41,7 @@ class TizenFormatter(AbstractFormatter):
 
         try:
             entries = os.listdir(path)
-            return any(re.match(r"^values.*$", item) for item in entries)
+            return any(item.startswith("values") for item in entries)
         except (OSError, IOError):
             return False
 
