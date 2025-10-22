@@ -152,6 +152,7 @@ class AndroidFormatter(AbstractFormatter):
                 # Add tail text if any (text after the last child element)
                 # Note: child.tail is text AFTER the element, not inside
 
+                value = value.replace("\n\\n", "\n")
                 self.set_translation_for_key(key, lang, value, current_section)
 
                 if comment:
