@@ -99,6 +99,9 @@ class AndroidFormatter(AbstractFormatter):
         # Unescape @ signs
         value = value.replace("\\@", "@")
 
+        # Unescape \n
+        value = value.replace("\n\\n", "\n")
+
         # Convert \u0020 space escapes
         def replace_spaces(match):
             spaces = match.group(0)
@@ -152,7 +155,6 @@ class AndroidFormatter(AbstractFormatter):
                 # Add tail text if any (text after the last child element)
                 # Note: child.tail is text AFTER the element, not inside
 
-                value = value.replace("\n\\n", "\n")
                 self.set_translation_for_key(key, lang, value, current_section)
 
                 if comment:

@@ -77,11 +77,12 @@ class AppleFormatter(AbstractFormatter):
                 key = key.replace('\\"', '"')
                 value = value.replace('\\"', '"')
 
-                self.set_translation_for_key(key, lang, value, current_section)
+                if not self.match_default_lang_translation(key, lang, value):
+                    self.set_translation_for_key(key, lang, value, current_section)
 
-                if last_comment:
-                    self.set_comment_for_key(key, last_comment)
-                    last_comment = None
+                    if last_comment:
+                        self.set_comment_for_key(key, last_comment)
+                        last_comment = None
 
             # Match comments: /* comment */
             comment_match = re.match(r"/\* (.*) \*/", line)
@@ -95,6 +96,20 @@ class AppleFormatter(AbstractFormatter):
             elif not key_value_match:
                 # Reset comment if line doesn't match key=value
                 last_comment = None
+
+    def match_default_lang_translation(self, key:str, lang:str, value:str):
+        """ Apple strings file for non-default language (es, de, fr, etc) contains
+            default value for not translated keys. That's why in Slovenian .strings
+            file you can find english words.
+            If `value` matches translation from default language, it means that
+            this string is not translated.
+        """
+        default_lang = self.twine_file.get_developer_language_code()
+        if default_lang is None:
+            return False
+        if default_lang == lang:
+            return False
+        return self.twine_file.definitions_by_key[key].translations[default_lang] == value
 
     def format_file(self, lang: str) -> Optional[str]:
         """Format file with trailing newline."""
