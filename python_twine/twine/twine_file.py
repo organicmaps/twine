@@ -171,6 +171,11 @@ class TwineFile:
             self.language_codes.remove(code)
         self.language_codes.insert(0, code)
 
+    def get_developer_language_code(self) -> Optional[str]:
+        if self.language_codes:
+            return self.language_codes[0]
+        return None
+
     def read(self, path: str):
         """
         Read and parse a Twine file.
