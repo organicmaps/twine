@@ -4,15 +4,13 @@ Abstract base formatter for all localization format implementations.
 
 import os
 import re
-import sys
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, TextIO
+from typing import Optional, Dict, TextIO, List
 from pathlib import Path
 
 import twine
 from twine.twine_file import TwineFile, TwineDefinition, TwineSection
 from twine.output_processor import OutputProcessor
-
 
 class AbstractFormatter(ABC):
     """Base class for all format formatters."""
@@ -23,6 +21,7 @@ class AbstractFormatter(ABC):
     def __init__(self):
         self.twine_file = TwineFile()
         self.options: Dict = {}
+        self.validation_errors: List[str] = []
 
     @abstractmethod
     def format_name(self) -> str:
@@ -70,6 +69,10 @@ class AbstractFormatter(ABC):
 
             # Only set if no reference or value differs from reference
             if not reference or value != reference.translations.get(lang):
+                if lang in definition.translations and definition.translations[lang] != value:
+                    msg = (f"Translation '{value}' overrides existing translation '{definition.translations[lang]}' "
+                           f"for key '{key}' and lang '{lang}' (comment '{definition.comment}').")
+                    self.add_validation_error(msg)
                 definition.translations[lang] = value
 
         elif self.options.get("consume_all"):
@@ -126,9 +129,9 @@ class AbstractFormatter(ABC):
             # Only set if no reference or comment differs from reference
             if not reference or comment != reference.raw_comment:
                 if definition.comment is not None and definition.comment != comment:
-                    print(f"Warning: translation overrides comment '{definition.comment}' -> '{comment}'. "
-                          f"The same key '{key}' has different comments in some translations.",
-                          file=sys.stderr)
+                    msg = (f"Translation overrides comment '{definition.comment}' -> '{comment}'. "
+                           f"The same key '{key}' has different comments in some translations.")
+                    self.add_validation_error(msg)
                 definition.comment = comment
 
     def determine_language_given_path(self, path: str) -> Optional[str]:
@@ -164,6 +167,12 @@ class AbstractFormatter(ABC):
     def read(self, io: TextIO, lang: str):
         """Read and parse a localization file."""
         raise NotImplementedError("You must implement read in your formatter class.")
+
+    def add_validation_error(self, msg: str):
+        self.validation_errors.append(msg)
+
+    def reset_validation_errors(self):
+        self.validation_errors = []
 
     def format_file(self, lang: str) -> Optional[str]:
         """Format the complete file for a language."""
