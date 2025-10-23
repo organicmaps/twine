@@ -9,6 +9,59 @@ cd python_twine
 pip install -e .
 ```
 
+## Usage
+
+### Generate Android resource files from string.txt
+
+```bash
+# Generate a single localization file
+python twine_cli.py generate-localization-file \
+    strings.txt \
+    strings.xml \
+    --tags android-app \
+    --lang en
+
+# Generate all localization files for Spanish
+python twine_cli.py generate-all-localization-files \
+    strings.txt \
+    $OMAPS_REPO/android/app/src/main/res \
+    --tags android-app \
+    --lang es
+
+# Generate all localization files for all available languages
+python twine_cli.py generate-all-localization-files \
+    strings.txt \
+    $OMAPS_REPO/android/sdk/src/main/res \
+    --tags android,android-sdk
+
+# Consume a translation file and update strings.txt file
+# It's better to assign developer language with `-d en` because of Apple .strings file.
+# Untranslated values are replaced with default (English) values in .strings
+# And Twine needs to know default lang to ignore untranslated strings.
+python twine_cli.py consume-localization-file \
+    strings.txt \
+    $OMAPS_REPO/android/app/src/main/res/values-ja/strings.xml
+    -t android,android-app
+    -f android \
+    -d en \
+    --lang ja
+
+# Consume all translations and update strings.txt file
+# It's better to assign developer language with `-d en` because of Apple .strings file.
+# Untranslated values are replaced with default (English) values in .strings
+# And Twine needs to know default lang to ignore untranslated strings.
+python twine_cli.py consume-all-localization-files \
+    strings.txt \
+    $OMAPS_REPO/iphone/Maps/LocalizedStrings
+    -t apple,apple-maps \
+    -f apple \
+    -d en \
+    --lang ja
+
+# Validate Twine file
+python twine_cli.py validate-twine-file strings.txt
+```
+
 ## Project Structure
 
 ```
@@ -114,24 +167,6 @@ pytest
 - Test suite conversion
 - Archive support (zip handling)
 - Plugin system
-
-## Usage
-
-Once complete, usage will match the Ruby version:
-
-```bash
-# Generate a single localization file
-twine generate-localization-file twine.txt output.xml --lang en
-
-# Generate all localization files
-twine generate-all-localization-files twine.txt ./locales/
-
-# Consume translations
-twine consume-localization-file twine.txt input.xml --lang es
-
-# Validate Twine file
-twine validate-twine-file twine.txt
-```
 
 ## Contributing
 
