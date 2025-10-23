@@ -182,14 +182,16 @@ class CLI:
         # Convert to dict for compatibility
         options = vars(parsed)
 
-        # Parse tags into the expected format
+        # Parse tags into groups. Tags within a group have "OR" meaning. Groups are joined with "AND".
+        # For example `--tags android,apple --tags maps` means filter by "(android OR apple) AND (maps)"
+        # Or another `--tags android-sdk --tags ~android-app` means filter by "(android-sdk) AND (not android-app)"
         if "tags" in options and options["tags"]:
             # Convert list of tag strings to list of lists
-            # Support tag syntax: tag1,tag2 for OR and multiple --tags for AND
-            tags = []
+            tag_groups = []
             for tag_group in options["tags"]:
-                tags += [t.strip() for t in tag_group.split(",")]
-            options["tags"] = tags
+                tags = [t.strip() for t in tag_group.split(",")]
+                tag_groups.append(tags)
+            options["tags"] = tag_groups
         else:
             options["tags"] = None
 

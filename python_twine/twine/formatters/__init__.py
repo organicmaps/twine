@@ -12,6 +12,12 @@ import twine
 from twine.twine_file import TwineFile, TwineDefinition, TwineSection
 from twine.output_processor import OutputProcessor
 
+def flatten(input: List[List[str]]) -> List[str]:
+    flat = []
+    for group in input:
+        flat += group
+    return flat
+
 class AbstractFormatter(ABC):
     """Base class for all format formatters."""
 
@@ -74,7 +80,8 @@ class AbstractFormatter(ABC):
                            f"for key '{key}' and lang '{lang}' (comment '{definition.comment}').")
                     self.add_validation_error(msg)
                 definition.translations[lang] = value
-            definition.add_tags(self.options["tags"])
+            if "tags" in self.options:
+                definition.add_tags(flatten(self.options["tags"]))
 
         elif self.options.get("consume_all"):
             print(f"Adding new definition '{key}' to twine file.", file=twine.stdout)
@@ -83,7 +90,8 @@ class AbstractFormatter(ABC):
 
             current_definition = TwineDefinition(key)
             current_section.definitions.append(current_definition)
-            current_definition.add_tags(self.options["tags"])
+            if "tags" in self.options:
+                current_definition.add_tags(flatten(self.options["tags"]))
 
             self.twine_file.definitions_by_key[key] = current_definition
             current_definition.translations[lang] = value

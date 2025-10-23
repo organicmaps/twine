@@ -38,13 +38,12 @@ class TwineDefinition:
         """Get the raw comment without reference fallback."""
         return self._comment
 
-    def add_tags(self, tags: Optional[List[str]]):
-        if tags:
-            if self.tags:
-                self.tags += tags
-            else:
-                self.tags = tags
-            self.tags = sorted(list(set(self.tags))) # Remove duplicates and sort
+    def add_tags(self, tags: List[str]):
+        if self.tags:
+            self.tags += tags
+        else:
+            self.tags = tags
+        self.tags = sorted(list(set(self.tags))) # Remove duplicates and sort
 
     def matches_tags(
         self, tags: Optional[List[List[str]]], include_untagged: bool
