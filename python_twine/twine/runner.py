@@ -3,9 +3,10 @@ Runner orchestrates command execution for Twine.
 """
 
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Iterable, Tuple
 
 import twine
+from twine.formatters import AbstractFormatter
 from twine.twine_file import TwineFile
 from twine import TwineError
 
@@ -179,6 +180,10 @@ class Runner:
         self.write_twine_data(self.options["twine_file"])
         print(f"Consumed {self.options['input_path']}", file=twine.stdout)
 
+        if formatter.validation_errors:
+            for msg in formatter.validation_errors:
+                print(f"  WARNING: {msg}")
+
     def consume_all_localization_files(self):
         """Import translations from all localization files."""
         input_path = Path(self.options["input_path"])
@@ -187,9 +192,55 @@ class Runner:
             raise TwineError(f"Directory does not exist: {input_path}")
 
         formatter = self._get_formatter()
-        file_name = self.options.get("file_name") or formatter.default_file_name()
 
         files_consumed = 0
+        validation_errors = {}
+
+        lang2file = dict(self.find_translation_files(input_path, formatter))
+
+        # Parse developer_language file first (if it's available).
+        if self.options.get("developer_language"):
+            default_lang = self.options.get("developer_language")
+            if default_lang in lang2file:
+                # First parse default language file.
+                # Apple .strings file for not-translated keys fallbacks to default value.
+                # We need to compare translations values to default values.
+                default_lang_path = lang2file[default_lang]
+                with open(default_lang_path, "r", encoding="UTF-8") as f:
+                    formatter.read(f, default_lang)
+
+                print(f"Consumed {default_lang_path}", file=twine.stdout)
+                if formatter.validation_errors:
+                    validation_errors[default_lang_path] = formatter.validation_errors
+                    for msg in formatter.validation_errors:
+                        print(f"  WARNING: {msg}")
+                formatter.reset_validation_errors()
+                files_consumed += 1
+
+                del lang2file[default_lang]
+
+        # Parse all files.
+        for lang, file_path in lang2file.items():
+            with open(file_path, "r", encoding="UTF-8") as f:
+                formatter.read(f, lang)
+
+            print(f"Consumed {file_path}", file=twine.stdout)
+            if formatter.validation_errors:
+                validation_errors[file_path] = formatter.validation_errors
+                for msg in formatter.validation_errors:
+                    print(f"  WARNING: {msg}")
+            formatter.reset_validation_errors()
+            files_consumed += 1
+
+        if files_consumed == 0:
+            raise TwineError(f"No files consumed from {input_path}")
+
+        # Export to Twine.
+        self.write_twine_data(self.options["twine_file"])
+
+    def find_translation_files(self, input_path: Path, formatter: AbstractFormatter) -> Iterable[Tuple[str, Path]]:
+        """ Iterate over files in `input_path` to find consumable by the formatter. """
+        file_name = self.options.get("file_name") or formatter.default_file_name()
 
         for item in input_path.iterdir():
             if not item.is_dir():
@@ -202,17 +253,7 @@ class Runner:
             file_path = item / file_name
             if not file_path.exists():
                 continue
-
-            with open(file_path, "r", encoding="UTF-8") as f:
-                formatter.read(f, lang)
-
-            print(f"Consumed {file_path}", file=twine.stdout)
-            files_consumed += 1
-
-        if files_consumed == 0:
-            raise TwineError(f"No files consumed from {input_path}")
-
-        self.write_twine_data(self.options["twine_file"])
+            yield lang, file_path
 
     def validate_twine_file(self):
         """Validate the Twine data file."""
