@@ -74,6 +74,7 @@ class AbstractFormatter(ABC):
                            f"for key '{key}' and lang '{lang}' (comment '{definition.comment}').")
                     self.add_validation_error(msg)
                 definition.translations[lang] = value
+            definition.add_tags(self.options["tags"])
 
         elif self.options.get("consume_all"):
             print(f"Adding new definition '{key}' to twine file.", file=twine.stdout)
@@ -82,10 +83,7 @@ class AbstractFormatter(ABC):
 
             current_definition = TwineDefinition(key)
             current_section.definitions.append(current_definition)
-
-            # Set tags if provided
-            if self.options.get("tags"):
-                current_definition.tags = self.options["tags"]
+            current_definition.add_tags(self.options["tags"])
 
             self.twine_file.definitions_by_key[key] = current_definition
             current_definition.translations[lang] = value
