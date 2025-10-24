@@ -66,7 +66,7 @@ class AndroidFormatter(AbstractFormatter):
 
             # values-{lang} or values-{lang}-r{region}
             match = re.match(
-                r"^values-([a-z]{2}(-r[a-z]{2})?)$", segment, re.IGNORECASE
+                r"^values-([a-z]{2,3}(-r[a-z]{2,4})?)$", segment, re.IGNORECASE
             )
             if match:
                 lang = match.group(1).replace("-r", "-")

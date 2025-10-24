@@ -80,9 +80,9 @@ class AppleFormatter(AbstractFormatter):
                 if not self.match_default_lang_translation(key, lang, value):
                     self.set_translation_for_key(key, lang, value, current_section)
 
-                    if last_comment:
-                        self.set_comment_for_key(key, last_comment)
-                        last_comment = None
+                if last_comment:
+                    self.set_comment_for_key(key, last_comment)
+                    last_comment = None
 
             # Match comments: /* comment */
             comment_match = re.match(r"/\* (.*) \*/", line)
