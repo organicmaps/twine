@@ -61,6 +61,25 @@ class TestAndroidFormatter(FormatterTestData):
         """Get fixtures directory path."""
         return Path(__file__).parent / "fixtures"
 
+    def test_language_inference(self, formatter):
+        lang = formatter.determine_language_given_path("/android/sdk/src/main/res/values/strings.xml")
+        assert lang is None
+
+        lang = formatter.determine_language_given_path("/android/sdk/src/main/res/values-fi/strings.xml")
+        assert lang == "fi"
+
+        lang = formatter.determine_language_given_path("/android/sdk/src/main/res/values-ast/strings.xml")
+        assert lang == "ast"
+
+        lang = formatter.determine_language_given_path("/android/sdk/src/main/res/values-ast/strings.xml")
+        assert lang == "ast"
+
+        lang = formatter.determine_language_given_path("/android/sdk/src/main/res/values-zh/strings.xml")
+        assert lang == "zh-Hans"
+
+        lang = formatter.determine_language_given_path("/android/sdk/src/main/res/values-zh-rHant/strings.xml")
+        assert lang == "zh-Hant"
+
     def test_read_format(self, formatter, fixtures_dir):
         """Test reading Android XML format."""
         fixture_path = fixtures_dir / "formatter_android.xml"
