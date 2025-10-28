@@ -346,17 +346,33 @@ class TwineFile:
         self, definition: TwineDefinition, language: str, file
     ) -> Optional[str]:
         """Write a single translation value to file."""
-        value = definition.translations.get(language)
-        if not value:
-            return None
+        output = None
+        if language in definition.plural_translations:
+            # Write plurals:
+            #   ru:one = %d метка
+            #   ru:few = %d метки
+            #   ru:many = %d меток
+            #   ru:other = %d меток
+            output = ""
+            for quantity, value in definition.plural_translation_for_lang(language).items():
+                output += f"\t\t{language}:{quantity} = {escape_spaces_backticks(value)}\n"
 
-        # Wrap in backticks if starts/ends with space or already has backticks
-        if (
-            value.startswith(" ")
-            or value.endswith(" ")
-            or (value.startswith("`") and value.endswith("`"))
-        ):
-            value = f"`{value}`"
+        elif language in definition.translations:
+            singular_value = definition.translations[language]
+            # Write singular
+            output = f"\t\t{language} = {escape_spaces_backticks(singular_value)}\n"
 
-        file.write(f"\t\t{language} = {value}\n")
-        return value
+        if output:
+            file.write(output)
+        return output
+
+
+def escape_spaces_backticks(txt: str) -> str:
+    # Wrap in backticks if starts/ends with space or already has backticks
+    if (
+        txt.startswith(" ")
+        or txt.endswith(" ")
+        or (txt.startswith("`") and txt.endswith("`"))
+    ):
+        return f"`{txt}`"
+    return txt

@@ -191,15 +191,32 @@ class TestTwineFile:
             with open(temp_path, "r") as f:
                 content = f.read()
 
-            assert "[[Test]]" in content
-            assert "[test_key]" in content
-            assert "en = Test" in content
-            assert "es = Prueba" in content
-            assert "comment = A test string" in content
-            assert "tags = test" in content
+            assert content == """[[Test]]
+\t[test_key]
+\t\tcomment = A test string
+\t\ttags = test
+\t\ten = Test
+\t\tes = Prueba
+"""
         finally:
             Path(temp_path).unlink()
 
+
+class TestWriter:
+    @pytest.fixture
+    def fixtures_dir(self):
+        """Get fixtures directory path."""
+        return Path(__file__).parent / "fixtures"
+
+    def test_accent_symbol(self, fixtures_dir):
+        twine_file = TwineFile()
+        twine_file.read(str(fixtures_dir / "twine_accent_values.txt"))
+        assert twine_file.definitions_by_key["value_with_leading_accent"].translations["en"] == '`value'
+        assert twine_file.definitions_by_key["value_with_trailing_accent"].translations["en"] == 'value`'
+        assert twine_file.definitions_by_key["value_with_leading_space"].translations["en"] == ' value'
+        assert twine_file.definitions_by_key["value_with_trailing_space"].translations["en"] == 'value '
+        assert twine_file.definitions_by_key["value_wrapped_by_spaces"].translations["en"] == ' value '
+        assert twine_file.definitions_by_key["value_wrapped_by_accents"].translations["en"] == '`value`'
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

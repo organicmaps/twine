@@ -1,0 +1,9 @@
+[[Bookmarks]]
+    [bookmarks_places]
+        comment = Number of bookmarks on UI
+        en:one = %d bookmark
+        en:other = %d bookmarks
+        ru:one = %d метка
+        ru:few = %d метки
+        ru:many = %d меток
+        ru:other = %d меток
