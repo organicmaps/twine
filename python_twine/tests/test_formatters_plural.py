@@ -7,6 +7,40 @@ from pathlib import Path
 import pytest
 
 from twine.twine_file import TwineFile, TwineDefinition, TwineSection
+from twine.formatters.android import AndroidFormatter
+
+class TestAndroidPluralFormatter:
+    """Test Android XML formatter with <plural/> tags."""
+
+    @pytest.fixture
+    def formatter(self):
+        """Create formatter with empty TwineFile."""
+        twine_file = TwineFile()
+        formatter = AndroidFormatter()
+        formatter.twine_file = twine_file
+        formatter.options = {"consume_all": True, "consume_comments": True}
+        return formatter
+
+    @pytest.fixture
+    def fixtures_dir(self):
+        """Get fixtures directory path."""
+        return Path(__file__).parent / "fixtures"
+
+    def test_read_format(self, formatter, fixtures_dir):
+        """Test reading Android XML format with <plural/> tags."""
+        fixture_path = fixtures_dir / "formatter_android_plurals.xml"
+        with open(fixture_path, "r", encoding="utf-8") as f:
+            formatter.read(f, "en")
+
+        twine_file = formatter.twine_file
+
+        assert "bookmarks_places" in twine_file.definitions_by_key
+        translations1 = twine_file.definitions_by_key["bookmarks_places"].plural_translations
+        assert translations1 == {"en": {"one": "%d bookmark", "other": "%d bookmarks"}}
+
+        assert "tracks" in twine_file.definitions_by_key
+        translations2 = twine_file.definitions_by_key["tracks"].plural_translations
+        assert translations2 == {"en": {"one": "%d track", "other": "%d tracks"}}
 
 
 class TestTwineFilePlural:

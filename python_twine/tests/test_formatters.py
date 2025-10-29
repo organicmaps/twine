@@ -157,35 +157,19 @@ class TestAndroidFormatter(FormatterTestData):
 
     def test_escape_ampersand(self, formatter):
         """Test ampersand escaping."""
-        formatter.set_translation_for_key("key1", "en", "this &amp; that", "Section A")
-        assert (
-            formatter.twine_file.definitions_by_key["key1"].translations["en"]
-            == "this & that"
-        )
+        assert AndroidFormatter.unescape_value("this &amp; that") == "this & that"
 
     def test_escape_less_than(self, formatter):
         """Test less-than escaping."""
-        formatter.set_translation_for_key("key1", "en", "this &lt; that", "Section B")
-        assert (
-            formatter.twine_file.definitions_by_key["key1"].translations["en"]
-            == "this < that"
-        )
+        assert AndroidFormatter.unescape_value("this &lt; that") == "this < that"
 
     def test_escape_apostrophe(self, formatter):
         """Test apostrophe escaping."""
-        formatter.set_translation_for_key("key1", "en", "it\\'s complicated", "Section C")
-        assert (
-            formatter.twine_file.definitions_by_key["key1"].translations["en"]
-            == "it's complicated"
-        )
+        assert AndroidFormatter.unescape_value("it\\'s complicated") == "it's complicated"
 
     def test_placeholder_conversion(self, formatter):
         """Test placeholder conversion from %s to %@."""
-        formatter.set_translation_for_key("key1", "en", "value %s", "Section D")
-        assert (
-            formatter.twine_file.definitions_by_key["key1"].translations["en"]
-            == "value %@"
-        )
+        assert AndroidFormatter.unescape_value("value %s") == "value %@"
 
     def test_writer_escape_ampersand(self, formatter):
         """Test ampersand escaping."""
