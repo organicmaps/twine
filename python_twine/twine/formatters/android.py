@@ -6,6 +6,7 @@ import re
 import html
 from typing import Dict, Optional, TextIO
 from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import Element
 
 from twine.formatters import AbstractFormatter
 from twine.formatters.tools import replace_with_filter
@@ -15,6 +16,16 @@ from twine.placeholders import (
     number_of_twine_placeholders,
 )
 
+
+def inner_xml(node:Element) -> str:
+    # Get inner XML (text + nested elements)
+    # Start with the text before any child element
+    value = node.text or ""
+
+    # Add each child element's XML and tail
+    for subelement in node:
+        value += ET.tostring(subelement, encoding="unicode", method="html")
+    return value
 
 class AndroidFormatter(AbstractFormatter):
     """Formatter for Android XML string resources."""
@@ -84,33 +95,6 @@ class AndroidFormatter(AbstractFormatter):
             result = re.sub(r"-([A-Z])", r"-r\1", result)
             return result
 
-    def set_translation_for_key(self, key: str, lang: str, value: str, section_name: Optional[str]):
-        """Set translation, handling Android-specific unescaping."""
-        # Unescape HTML entities
-        value = html.unescape(value)
-
-        # Unescape Android escapes
-        value = value.replace("\\'", "'")
-        value = value.replace('\\"', '"')
-
-        # Convert placeholders from Android to Twine
-        value = convert_placeholders_from_android_to_twine(value)
-
-        # Unescape @ signs
-        value = value.replace("\\@", "@")
-
-        # Unescape \n
-        value = value.replace("\n\\n", "\n")
-
-        # Convert \u0020 space escapes
-        def replace_spaces(match):
-            spaces = match.group(0)
-            return " " * (len(spaces) // 6)
-
-        value = re.sub(r"(\\u0020)+", replace_spaces, value)
-
-        super().set_translation_for_key(key, lang, value, section_name)
-
     def read(self, io: TextIO, lang: str):
         """Read Android XML strings file."""
         content = io.read()
@@ -144,18 +128,33 @@ class AndroidFormatter(AbstractFormatter):
                 if not key:
                     continue
 
-                # Get inner XML (text + nested elements)
-                # Start with the text before any child element
-                value = child.text or ""
-
-                # Add each child element's XML and tail
-                for subelement in child:
-                    value += ET.tostring(subelement, encoding="unicode", method="html")
-
-                # Add tail text if any (text after the last child element)
-                # Note: child.tail is text AFTER the element, not inside
-
+                value = self.unescape_value(inner_xml(child))
                 self.set_translation_for_key(key, lang, value, current_section)
+
+                if comment:
+                    self.set_comment_for_key(key, comment)
+                    comment = None
+
+            # Handle plural strings elements:
+            #  <plurals name="bookmarks_places">
+            #    <item quantity="one">%d bookmark</item>
+            #    <item quantity="other">%d bookmarks</item>
+            #  </plurals>
+            elif child.tag == "plurals":
+                key = child.get("name")
+                if not key:
+                    continue
+
+                plural_values = {}
+                for subelement in child:
+                    if subelement.tag == "item":
+                        quantity = subelement.get("quantity")
+                        if not quantity:
+                            continue
+                        plural_values[quantity] = self.unescape_value(inner_xml(subelement))
+
+                if plural_values:
+                    self.set_translation_for_key_plural(key, lang, plural_values, current_section)
 
                 if comment:
                     self.set_comment_for_key(key, comment)
@@ -199,6 +198,31 @@ class AndroidFormatter(AbstractFormatter):
         result += "\n".join(items)
         result += "\n    </plurals>"
         return result
+
+    @staticmethod
+    def unescape_value(value: str) -> str:
+        """ Unescape HTML entities """
+        value = html.unescape(value)
+
+        # Unescape Android escapes
+        value = value.replace("\\'", "'")
+        value = value.replace('\\"', '"')
+
+        # Convert placeholders from Android to Twine
+        value = convert_placeholders_from_android_to_twine(value)
+
+        # Unescape @ signs
+        value = value.replace("\\@", "@")
+
+        # Unescape \n
+        value = value.replace("\n\\n", "\n")
+
+        # Convert \u0020 space escapes
+        def replace_spaces(match):
+            spaces = match.group(0)
+            return " " * (len(spaces) // 6)
+
+        return re.sub(r"(\\u0020)+", replace_spaces, value)
 
     def escape_value(self, value: str) -> str:
         """

@@ -103,6 +103,53 @@ class AbstractFormatter(ABC):
         if lang not in self.twine_file.language_codes:
             self.twine_file.add_language_code(lang)
 
+    def set_translation_for_key_plural(self, key: str, lang: str, values: Dict[str, str], section_name:Optional[str]):
+        """ Set plular values translation for a key in a specific language.
+            This method is similar to set_translation_for_key(). Let's keep both
+            methods for simplicity.
+        """
+        # Normalize newlines
+        values = {key:val.replace("\n", "\\n") for (key, val) in values.items()}
+
+        if key in self.twine_file.definitions_by_key:
+            definition = self.twine_file.definitions_by_key[key]
+            reference = None
+
+            if definition.reference_key:
+                reference = self.twine_file.definitions_by_key.get(
+                    definition.reference_key
+                )
+
+            # Only set if no reference or value differs from reference
+            if not reference or values != reference.plural_translations.get(lang):
+                if lang in definition.plural_translations and definition.plural_translations[lang] != values:
+                    msg = (f"Translation '{values}' overrides existing translation '{definition.plural_translations[lang]}' "
+                           f"for key '{key}' and lang '{lang}' (comment '{definition.comment}').")
+                    self.add_validation_error(msg)
+                definition.plural_translations[lang] = values
+            if "tags" in self.options:
+                definition.add_tags(flatten(self.options["tags"]))
+
+        elif self.options.get("consume_all"):
+            print(f"Adding new definition '{key}' to twine file.", file=twine.stdout)
+
+            current_section = self.get_section_or_create(section_name or "Uncategorized")
+
+            current_definition = TwineDefinition(key)
+            current_section.definitions.append(current_definition)
+            if "tags" in self.options:
+                current_definition.add_tags(flatten(self.options["tags"]))
+
+            self.twine_file.definitions_by_key[key] = current_definition
+            current_definition.plural_translations[lang] = values
+
+        else:
+            print(f"WARNING: '{key}' not found in twine file.", file=twine.stdout)
+
+        # Add language code if not present
+        if lang not in self.twine_file.language_codes:
+            self.twine_file.add_language_code(lang)
+
     def get_section(self, section_name) -> Optional[TwineSection]:
         # Find or create a section by name
         return next(
