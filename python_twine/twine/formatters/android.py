@@ -33,14 +33,20 @@ class AndroidFormatter(AbstractFormatter):
     SUPPORTS_PLURAL = True
 
     # Language code mappings for Android
-    LANG_CODES = {
+    ANDROID_TO_TWINE_LANG_CODES = {
         "zh": "zh-Hans",
+        "zh-TW": "zh-Hant",
         "zh-CN": "zh-Hans",
         "zh-HK": "zh-Hant",
         # Legacy language codes
         "iw": "he",
         "in": "id",
         "ji": "yi",
+    }
+
+    TWINE_TO_ANDROID_LANG_CODES = {
+        "zh-Hans": "zh",
+        "zh-Hant": "zh-TW",
     }
 
     def format_name(self) -> str:
@@ -81,7 +87,7 @@ class AndroidFormatter(AbstractFormatter):
             )
             if match:
                 lang = match.group(1).replace("-r", "-")
-                return self.LANG_CODES.get(lang, lang)
+                return self.ANDROID_TO_TWINE_LANG_CODES.get(lang, lang)
 
         return super().determine_language_given_path(path)
 
@@ -90,6 +96,7 @@ class AndroidFormatter(AbstractFormatter):
         if self.twine_file.language_codes and lang == self.twine_file.language_codes[0]:
             return "values"
         else:
+            lang = self.TWINE_TO_ANDROID_LANG_CODES.get(lang, lang)
             # Convert en-US to values-en-rUS
             result = f"values-{lang}"
             result = re.sub(r"-([A-Z])", r"-r\1", result)

@@ -74,6 +74,9 @@ class CLI:
         )
         consume_all.add_argument("twine_file", help="Path to Twine data file")
         consume_all.add_argument("input_path", help="Input directory path")
+        consume_all.add_argument(
+            "-n", "--file-name", help="Input file name (default: format-specific)"
+        )
         CLI._add_common_arguments(consume_all)
         CLI._add_consume_arguments(consume_all)
 

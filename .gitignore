@@ -1,5 +1,6 @@
 *.gem
 .idea/
+*.iml
 *.lock
 .ruby-version
 .DS_Store
