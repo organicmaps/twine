@@ -161,7 +161,7 @@ class AbstractFormatter(ABC):
 
         if not section:
             section = TwineSection(section_name)
-            self.twine_file.sections.insert(0, section)
+            self.twine_file.sections.append(section)
 
         return section
 

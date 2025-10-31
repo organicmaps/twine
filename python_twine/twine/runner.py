@@ -236,6 +236,7 @@ class Runner:
             raise TwineError(f"No files consumed from {input_path}")
 
         # Export to Twine.
+        self.twine_file.optimize_duplicates()
         self.write_twine_data(self.options["twine_file"])
 
     def find_translation_files(self, input_path: Path, formatter: AbstractFormatter) -> Iterable[Tuple[str, Path]]:

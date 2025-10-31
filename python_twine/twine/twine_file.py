@@ -3,8 +3,16 @@ Core data models for Twine.
 """
 
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
+FALLBACK_LANGS_MAPPING = {
+    "zh-CN": "zh-Hans",  # Chinese Simplified
+    "zh-TW": "zh-Hant",  # Chinese Taiwan    -> Chinese Traditional
+    "zh-MO": "zh-Hant",  # Chinese Macau     -> Chinese Traditional
+    "zh-HK": "zh-Hant",  # Chinese Hong Kong -> Chinese Traditional
+}
+
+REGIONAL_LANG_REGEX = re.compile(r"([a-zA-Z]{2})-[a-zA-Z]+")
 
 class TwineDefinition:
     """Represents a single translatable string definition."""
@@ -182,6 +190,49 @@ class TwineFile:
         if self.language_codes:
             return self.language_codes[0]
         return None
+
+    def optimize_duplicates(self):
+        """ Some regional languages have common items. Such as 'en-GB' and 'en'.
+            Deduplication: for each item and each language search the same translations
+            within fallback languages. Not all languages have fallbacks.
+        """
+        for key, definition in self.definitions_by_key.items():
+            definition.translations = {lang:value for (lang, value) in definition.translations.items() \
+                                       if not self.match_fallback_lang(definition.translations, lang, key, value)}
+            definition.plural_translations = {lang:value for (lang, value) in definition.plural_translations.items() \
+                                              if not self.match_fallback_lang(definition.plural_translations, lang, key, value)}
+
+    def match_fallback_lang(self, translations: dict, lang:str, key:str, value: Any) -> bool:
+        # TODO: this method is invoked for each key and lang. Optimize: cache all fallback languages in a dict
+        for fallback_lang in self.fallback_languages(lang):
+            if translations.get(fallback_lang) == value:
+                print(f"Warning: key '{key}' in lang '{lang}' matches value from fallback language '{fallback_lang}'")
+                return True
+        return False
+
+    def fallback_languages(self, language: str) -> List[str]:
+        fallbacks = []
+
+        # Check specific mapping
+        if language in FALLBACK_LANGS_MAPPING:
+            fallbacks.append(FALLBACK_LANGS_MAPPING[language])
+
+        # Regional dialect fallbacks to generic language
+        # e.g., 'es-MX' -> 'es', 'pt-BR' -> 'pt'
+        match = REGIONAL_LANG_REGEX.match(language)
+        if match:
+            generic_language = match.group(1)
+            fallbacks.append(generic_language)
+
+        # Remove duplicates while preserving order
+        seen = set()
+        result = []
+        for lang in fallbacks:
+            if lang not in seen:
+                seen.add(lang)
+                result.append(lang)
+
+        return result
 
     def read(self, path: str):
         """
