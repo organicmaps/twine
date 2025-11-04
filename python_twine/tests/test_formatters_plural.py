@@ -165,14 +165,19 @@ class TestTwineFilePlural:
 
 class TestApplePluralFormatter:
     @pytest.fixture
-    def formatter(self):
+    def formatter(self) -> ApplePluralFormatter:
         """Create formatter with empty TwineFile."""
         formatter = ApplePluralFormatter()
         formatter.options = {"consume_all": True, "consume_comments": True}
         return formatter
 
     @pytest.fixture
-    def twine_file(self):
+    def fixtures_dir(self) -> Path:
+        """Get fixtures directory path."""
+        return Path(__file__).parent / "fixtures"
+
+    @pytest.fixture
+    def twine_file(self) -> TwineFile:
         # Prepare TwineFile data
         twine_file = TwineFile()
         num_edits_def = TwineDefinition("num_edits")
@@ -197,6 +202,23 @@ class TestApplePluralFormatter:
         num_edits_def.translations["de"] = "%d Bearbeitungen"
 
         return twine_file
+
+    def test_read_stringsdict(self, formatter:ApplePluralFormatter, fixtures_dir):
+        """Test reading Android XML format with <plural/> tags."""
+        fixture_path = fixtures_dir / "formatter_apple_plurals.stringsdict"
+        with open(fixture_path, "r", encoding="utf-8") as f:
+            formatter.read(f, "en")
+
+        twine_file = formatter.twine_file
+
+        assert "bookmarks_places" in twine_file.definitions_by_key
+        translations1 = twine_file.definitions_by_key["bookmarks_places"].plural_translations
+        assert translations1 == {"en": {"one": "%d bookmark", "other": "%d bookmarks"}}
+
+        assert "tracks" in twine_file.definitions_by_key
+        translations2 = twine_file.definitions_by_key["tracks"].plural_translations
+        assert translations2 == {"en": {"one": "%d track", "other": "%d tracks"}}
+
 
     def test_write_plural_format(self, formatter, twine_file):
         formatter.twine_file = twine_file

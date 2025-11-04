@@ -78,6 +78,7 @@ class OutputProcessor:
         """
         result = TwineFile()
         result.language_codes = self.twine_file.language_codes.copy()
+        fallbacks = self.fallback_languages(language)
 
         for section in self.twine_file.sections:
             new_section = TwineSection(section.name)
@@ -99,7 +100,6 @@ class OutputProcessor:
 
                 # Try fallback languages if no translation found
                 if value is None and include_option != "translated":
-                    fallbacks = self.fallback_languages(language)
                     value = definition.translation_for_lang(fallbacks)
 
                 # Skip if still no value
@@ -112,8 +112,10 @@ class OutputProcessor:
 
                 # Handle plural translations
                 if definition.is_plural():
-                    if language not in new_definition.plural_translations:
-                        new_definition.plural_translations[language] = {}
+                    if language not in new_definition.plural_translations \
+                            and include_option != "translated":
+                        lng = definition.find_plural_lang_fallback(fallbacks)
+                        new_definition.plural_translations[language] = definition.plural_translation_for_lang(lng)
 
                     # Ensure 'other' key exists for plurals
                     if "other" not in new_definition.plural_translations[language]:
