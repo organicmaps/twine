@@ -18,6 +18,16 @@ def flatten(input: List[List[str]]) -> List[str]:
         flat += group
     return flat
 
+def find_dict_diff(dict1: dict, dict2: dict):
+    keys = dict1.keys() | dict2.keys()
+    for key in sorted(keys):
+        if key in dict1 and key not in dict2:
+            yield key, dict1[key], None
+        elif key not in dict1 and key in dict2:
+            yield key, None, dict2[key]
+        elif dict1[key] != dict2[key]:
+            yield key, dict1[key], dict2[key]
+
 class AbstractFormatter(ABC):
     """Base class for all format formatters."""
 
@@ -105,8 +115,7 @@ class AbstractFormatter(ABC):
 
     def set_translation_for_key_plural(self, key: str, lang: str, values: Dict[str, str], section_name:Optional[str]):
         """ Set plular values translation for a key in a specific language.
-            This method is similar to set_translation_for_key(). Let's keep both
-            methods for simplicity.
+            This method is similar to set_translation_for_key() but with dict values.
         """
         # Normalize newlines
         values = {key:val.replace("\n", "\\n") for (key, val) in values.items()}
@@ -123,10 +132,14 @@ class AbstractFormatter(ABC):
             # Only set if no reference or value differs from reference
             if not reference or values != reference.plural_translations.get(lang):
                 if lang in definition.plural_translations and definition.plural_translations[lang] != values:
-                    msg = (f"Translation '{values}' overrides existing translation '{definition.plural_translations[lang]}' "
-                           f"for key '{key}' and lang '{lang}' (comment '{definition.comment}').")
-                    self.add_validation_error(msg)
-                definition.plural_translations[lang] = values
+                    for quantity, value_old, value_new in find_dict_diff(definition.plural_translations[lang], values):
+                        msg = (f"Translation '{value_new}' overrides existing translation '{value_old}' "
+                                   f"for key '{key}:{quantity}' and lang '{lang}'")
+                        self.add_validation_error(msg)
+                if lang in definition.plural_translations:
+                    definition.plural_translations[lang].update(values)
+                else:
+                    definition.plural_translations[lang] = values
             if "tags" in self.options:
                 definition.add_tags(flatten(self.options["tags"]))
 

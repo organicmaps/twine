@@ -122,6 +122,13 @@ class TwineDefinition:
 
         return None
 
+    def find_plural_lang_fallback(self, fallback_langs: List[str]) -> Optional[str]:
+        """ Find first language from `fallback_langs` which is in plural_translations. """
+        return next(
+            filter(lambda lng: lng in self.plural_translations,
+                   fallback_langs),
+            None)
+
     def plural_translation_for_lang(self, lang: str) -> Optional[Dict[str, str]]:
         """
         Get plural translations for a language, sorted by PLURAL_KEYS order.

@@ -4,6 +4,7 @@ Apple .stringsdict formatter for plural localization.
 
 from typing import Dict, Optional, TextIO
 from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import Element
 
 from twine.formatters.apple import AppleFormatter
 from twine.placeholders import convert_placeholders_from_android_to_twine
@@ -128,94 +129,27 @@ class ApplePluralFormatter(AppleFormatter):
             comment_text = None
             for j in range(i - 1, -1, -1):
                 prev = children[j]
-                if isinstance(prev, ET.Comment):
+                # Handle comments (they have a callable tag function)
+                if callable(prev.tag):
                     comment_text = prev.text.strip() if prev.text else None
                     break
                 elif prev.tag is not None:  # Hit another element
                     break
 
             # Extract plural hash
-            plural_hash = {}
-
-            # Find <key>value</key><dict> inside value_container
-            value_dict = None
-            value_children = list(value_container)
-
-            for j, inner_key in enumerate(value_children):
-                if inner_key.tag == "key" and inner_key.text == "value":
-                    if j + 1 < len(value_children):
-                        value_dict = value_children[j + 1]
-                        break
-
-            if value_dict is not None and value_dict.tag == "dict":
-                # Extract plural entries
-                plural_children = list(value_dict)
-                j = 0
-
-                while j < len(plural_children):
-                    pkey_elem = plural_children[j]
-
-                    if pkey_elem.tag == "key":
-                        pkey = pkey_elem.text
-
-                        if pkey in TwineDefinition.PLURAL_KEYS:
-                            if j + 1 < len(plural_children):
-                                string_elem = plural_children[j + 1]
-
-                                if string_elem.tag == "string":
-                                    pvalue = string_elem.text or ""
-                                    plural_hash[pkey] = pvalue
-
-                    j += 1
+            plural_hash = self.extract_plural_dict(value_container)
 
             if not plural_hash:
                 i += 2
                 continue
 
             # Get or create definition
-            definition = self.twine_file.definitions_by_key.get(key_name)
+            if not self.match_default_lang_translation(key_name, lang, plural_hash):
+                self.set_translation_for_key_plural(key_name, lang, plural_hash, section_name=None)
 
-            if not definition:
-                if self.options.get("consume_all"):
-                    print(
-                        f"Adding new plural definition '{key_name}' to twine file.",
-                        file=twine.stdout,
-                    )
-
-                    # Find or create Uncategorized section
-                    current_section = next(
-                        (
-                            s
-                            for s in self.twine_file.sections
-                            if s.name == "Uncategorized"
-                        ),
-                        None,
-                    )
-
-                    if not current_section:
-                        current_section = TwineSection("Uncategorized")
-                        self.twine_file.sections.insert(0, current_section)
-
-                    definition = TwineDefinition(key_name)
-                    current_section.definitions.append(definition)
-                    self.twine_file.definitions_by_key[key_name] = definition
-                else:
-                    print(
-                        f"WARNING: '{key_name}' not found in twine file (plural).",
-                        file=twine.stdout,
-                    )
-                    i += 2
-                    continue
-
-            # Merge plural translations
-            if lang not in definition.plural_translations:
-                definition.plural_translations[lang] = {}
-
-            definition.plural_translations[lang].update(plural_hash)
-
-            # Set base translation to 'other' if present
-            if "other" in plural_hash:
-                self.set_translation_for_key(key_name, lang, plural_hash["other"])
+                # Set base translation to 'other' if present
+                if "other" in plural_hash:
+                    self.set_translation_for_key(key_name, lang, plural_hash["other"], section_name=None)
 
             # Set comment if requested
             if comment_text and self.options.get("consume_comments"):
@@ -227,9 +161,75 @@ class ApplePluralFormatter(AppleFormatter):
 
             i += 2
 
+    def extract_plural_dict(self, value_element: Element) -> dict:
+        """ Parse next XML structure to extract key-value pairs:
+        	<dict>
+                <key>NSStringLocalizedFormatKey</key>
+                <string>%#@value@</string>
+                <key>value</key>
+                <dict>
+                    <key>NSStringFormatSpecTypeKey</key>
+                    <string>NSStringPluralRuleType</string>
+                    <key>NSStringFormatValueTypeKey</key>
+                    <string>d</string>
+                    <key>one</key>
+                    <string>%d bookmark</string>
+                    <key>other</key>
+                    <string>%d bookmarks</string>
+                </dict>
+            </dict>
+        """
+        plural_dict = {}
+
+        # Find <key>value</key><dict> inside value_element
+        value_dict = None
+        value_children = list(value_element)
+
+        for j, inner_key in enumerate(value_children):
+            if inner_key.tag == "key" and inner_key.text == "value":
+                if j + 1 < len(value_children):
+                    value_dict = value_children[j + 1]
+                    break
+
+        if value_dict is not None and value_dict.tag == "dict":
+            # Extract plural entries
+            plural_children = list(value_dict)
+            j = 0
+
+            while j < len(plural_children):
+                pkey_elem = plural_children[j]
+
+                if pkey_elem.tag == "key":
+                    pkey = pkey_elem.text
+
+                    if pkey in TwineDefinition.PLURAL_KEYS:
+                        if j + 1 < len(plural_children):
+                            string_elem = plural_children[j + 1]
+
+                            if string_elem.tag == "string":
+                                pvalue = string_elem.text or ""
+                                plural_dict[pkey] = pvalue
+
+                j += 1
+        return plural_dict
+
     def should_include_definition(self, definition, lang: str) -> bool:
         """Only include plural definitions."""
         return (
             definition.is_plural()
             and definition.plural_translation_for_lang(lang) is not None
         )
+
+    def match_default_lang_translation(self, key:str, lang:str, value:dict) -> bool:
+        """ Apple strings file for non-default language (es, de, fr, etc) contains
+            default value for not translated keys. That's why in Slovenian .strings
+            file you can find english words.
+            If `value` matches translation from default language, it means that
+            this string is not translated.
+        """
+        default_lang = self.twine_file.get_developer_language_code()
+        if default_lang is None:
+            return False
+        if default_lang == lang:
+            return False
+        return self.twine_file.definitions_by_key[key].plural_translations[default_lang] == value
