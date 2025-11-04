@@ -8,7 +8,7 @@ from xml.etree.ElementTree import Element
 
 from twine.formatters.apple import AppleFormatter
 from twine.placeholders import convert_placeholders_from_android_to_twine
-from twine.twine_file import TwineDefinition, TwineSection
+from twine.twine_file import TwineDefinition
 
 
 class ApplePluralFormatter(AppleFormatter):
@@ -83,7 +83,6 @@ class ApplePluralFormatter(AppleFormatter):
 
     def read(self, io: TextIO, lang: str):
         """Read Apple .stringsdict file."""
-        import twine
         from twine import TwineError
 
         content = io.read()
