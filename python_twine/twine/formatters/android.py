@@ -47,6 +47,9 @@ class AndroidFormatter(AbstractFormatter):
     TWINE_TO_ANDROID_LANG_CODES = {
         "zh-Hans": "zh",
         "zh-Hant": "zh-TW",
+        "he": "iw",
+        "id": "in",
+        "yi": "ji",
     }
 
     def format_name(self) -> str:
