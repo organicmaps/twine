@@ -130,9 +130,10 @@ class TestTwineFilePlural:
                 twine_content = fout.read()
 
             assert twine_content == """[[OSM]]
-\t[num_edits]
-\t\ten:one = %d edit
-\t\ten:other = %d edits
+
+[num_edits]
+en:one = %d edit
+en:other = %d edits
 """
 
     def test_read_plurals(self, fixtures_dir):

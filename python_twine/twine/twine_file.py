@@ -371,20 +371,20 @@ class TwineFile:
                 f.write(f"[[{section.name}]]\n")
 
                 for definition in section.definitions:
-                    f.write(f"\t[{definition.key}]\n")
+                    f.write(f"\n[{definition.key}]\n")
 
                     # Write comment
                     if definition.raw_comment:
-                        f.write(f"\t\tcomment = {definition.raw_comment}\n")
+                        f.write(f"comment = {definition.raw_comment}\n")
 
                     # Write reference
                     if definition.reference_key:
-                        f.write(f"\t\tref = {definition.reference_key}\n")
+                        f.write(f"ref = {definition.reference_key}\n")
 
                     # Write tags
                     if definition.tags:
                         tag_str = ",".join(definition.tags)
-                        f.write(f"\t\ttags = {tag_str}\n")
+                        f.write(f"tags = {tag_str}\n")
 
                     # Write developer language first
                     if dev_lang:
@@ -413,12 +413,12 @@ class TwineFile:
             #   ru:other = %d меток
             output = ""
             for quantity, value in definition.plural_translation_for_lang(language).items():
-                output += f"\t\t{language}:{quantity} = {escape_spaces_backticks(value)}\n"
+                output += f"{language}:{quantity} = {escape_spaces_backticks(value)}\n"
 
         elif language in definition.translations:
             singular_value = definition.translations[language]
             # Write singular
-            output = f"\t\t{language} = {escape_spaces_backticks(singular_value)}\n"
+            output = f"{language} = {escape_spaces_backticks(singular_value)}\n"
 
         if output:
             file.write(output)
