@@ -299,8 +299,8 @@ class AndroidFormatter(AbstractFormatter):
             lambda i: not inside_cdata(result, i)
         )
 
-        # Escape @ signs that aren't resource identifiers
-        resource_identifier_regex = re.compile(r"@(?!([a-z\.]+:)?[a-z+]+\/[a-zA-Z_]+)")
+        # escape non resource identifier @ signs (http://developer.android.com/guide/topics/resources/accessing-resources.html#ResourcesFromXml)
+        resource_identifier_regex = re.compile(r"@(?!([a-z\.]+:)?[a-z+]+\/[a-zA-Z_]+)")  # @[<package_name>:]<resource_type>/<resource_name>
         result = resource_identifier_regex.sub(r"\\@", result)
 
         return result
