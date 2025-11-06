@@ -192,11 +192,12 @@ class TestTwineFile:
                 content = f.read()
 
             assert content == """[[Test]]
-\t[test_key]
-\t\tcomment = A test string
-\t\ttags = test
-\t\ten = Test
-\t\tes = Prueba
+
+[test_key]
+comment = A test string
+tags = test
+en = Test
+es = Prueba
 """
         finally:
             Path(temp_path).unlink()
