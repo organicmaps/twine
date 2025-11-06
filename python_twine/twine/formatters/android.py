@@ -225,7 +225,8 @@ class AndroidFormatter(AbstractFormatter):
         value = value.replace("\\@", "@")
 
         # Unescape \n
-        value = value.replace("\n\\n", "\n")
+        value = value.replace("\n\\n", "\n")  # Old escape format
+        value = value.replace("\\n", "\n")
 
         # Convert \u0020 space escapes
         def replace_spaces(match):
@@ -292,11 +293,6 @@ class AndroidFormatter(AbstractFormatter):
 
         result = replace_with_filter(result, "<", "&lt;",
             lambda i: is_non_tag(result, i)
-        )
-
-        # Escape newlines (unless in CDATA)
-        result = replace_with_filter(result, "\\n", "\n\\n",
-            lambda i: not inside_cdata(result, i)
         )
 
         # escape non resource identifier @ signs (http://developer.android.com/guide/topics/resources/accessing-resources.html#ResourcesFromXml)

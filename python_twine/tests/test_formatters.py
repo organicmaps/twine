@@ -230,12 +230,12 @@ class TestAndroidFormatter(FormatterTestData):
 
         assert formatter.escape_value('<![C DATA[ <![CDATA[') == '&lt;![C DATA[ <![CDATA['
 
-    def test_writer_escape_newline(self, formatter):
-        """Test '\\n' escaping."""
-        assert formatter.escape_value('\\n') == '\n\\n'
-        assert formatter.escape_value('Downloading %@. You can now\\nproceed to the map.') == 'Downloading %\\@. You can now\n\\nproceed to the map.'
+    def test_writer_escape_at(self, formatter):
+        """Test '@' escaping."""
+        assert formatter.escape_value('Downloading %@. You can now\\nproceed to the map.') == 'Downloading %\\@. You can now\\nproceed to the map.'
+        assert formatter.escape_value('Press @strings/escape to stop.') == 'Press @strings/escape to stop.'
 
-        cdata = '<![CDATA[ New\\nline\n ]]>'
+        cdata = '<![CDATA[ New\nline\\n ]]>'
         assert formatter.escape_value(cdata) == cdata
 
 class TestAppleFormatter(FormatterTestData):
