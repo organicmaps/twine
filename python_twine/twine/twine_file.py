@@ -199,6 +199,13 @@ class TwineFile:
         return None
 
     def optimize_duplicates(self):
+        # Check if translation matches value from 'ref' definition.
+        for key, definition in self.definitions_by_key.items():
+            if definition.reference is not None:
+                ref = definition.reference
+                definition.translations = {lang:value for lang, value in definition.translations.items()
+                                           if lang not in ref.translations or ref.translations[lang] != value}
+
         """ Some regional languages have common items. Such as 'en-GB' and 'en'.
             Deduplication: for each item and each language search the same translations
             within fallback languages. Not all languages have fallbacks.
@@ -217,7 +224,7 @@ class TwineFile:
                 return True
         return False
 
-    def fallback_languages(self, language: str) -> List[str]:
+    def fallback_languages(self, language: str, include_default:bool = False) -> List[str]:
         fallbacks = []
 
         # Check specific mapping
@@ -230,6 +237,9 @@ class TwineFile:
         if match:
             generic_language = match.group(1)
             fallbacks.append(generic_language)
+
+        if include_default and language != self.get_developer_language_code():
+            fallbacks.append(self.get_developer_language_code())
 
         # Remove duplicates while preserving order
         seen = set()

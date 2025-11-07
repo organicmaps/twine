@@ -12,7 +12,9 @@ import twine
 from twine.twine_file import TwineFile, TwineDefinition, TwineSection
 from twine.output_processor import OutputProcessor
 
-def flatten(input: List[List[str]]) -> List[str]:
+def flatten(input: Optional[List[List[str]]]) -> List[str]:
+    if input is None:
+        return []
     flat = []
     for group in input:
         flat += group
