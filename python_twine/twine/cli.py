@@ -63,6 +63,11 @@ class CLI:
         )
         consume_file.add_argument("twine_file", help="Path to Twine data file")
         consume_file.add_argument("input_path", help="Input file path")
+        consume_file.add_argument(
+            "--fallback-to-default",
+            action="store_true",
+            help="Remove translations matching default language",
+        )
         CLI._add_common_arguments(consume_file)
         CLI._add_language_argument(consume_file)
         CLI._add_consume_arguments(consume_file)
@@ -74,6 +79,11 @@ class CLI:
         )
         consume_all.add_argument("twine_file", help="Path to Twine data file")
         consume_all.add_argument("input_path", help="Input directory path")
+        consume_all.add_argument(
+            "--fallback-to-default",
+            action="store_true",
+            help="Remove translations matching default language",
+        )
         consume_all.add_argument(
             "-n", "--file-name", help="Input file name (default: format-specific)"
         )

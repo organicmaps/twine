@@ -1,0 +1,14 @@
+[[Main]]
+
+[value_with_local_lang_codes]
+en = Bar
+es = Bar
+es-MX = Bar
+pt = Bar
+pt-BR = Bar
+
+[value_with_duplicated]
+en = NULL
+de = NULL
+fr = Avant
+

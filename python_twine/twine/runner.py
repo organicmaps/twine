@@ -172,6 +172,9 @@ class Runner:
         if self.options.get("languages"):
             lang = self.options["languages"][0]
 
+        if bool(self.options.get("fallback_to_default")):
+            self.twine_file.fallback_to_default = True
+
         formatter, lang = self._prepare_read_write(self.options["input_path"], lang)
 
         with open(self.options["input_path"], "r", encoding="UTF-8") as f:
@@ -190,6 +193,9 @@ class Runner:
 
         if not input_path.is_dir():
             raise TwineError(f"Directory does not exist: {input_path}")
+
+        if bool(self.options.get("fallback_to_default")):
+            self.twine_file.fallback_to_default = True
 
         formatter = self._get_formatter()
 
