@@ -170,10 +170,27 @@ class TwineSection:
 class TwineFile:
     """Main Twine data file containing sections and definitions."""
 
-    def __init__(self):
+    def __init__(self, fallback_to_default:bool = False):
+        """
+        :param fallback_to_default: indicates if TwineFile optimization should deduplicate
+               languages matching default (English) value.
+
+               For example in next strings 'es' should not be removed (fallback_to_default = False)
+               [bar]
+               en = Bar
+               es = Bar
+               uk = Bar
+
+               While in next sample all languages except 'en' should be removed (fallback_to_default = True)
+               [take_exit_number_street_verb]
+               en = NULL
+               de = NULL
+               nl = NULL
+        """
         self.sections: List[TwineSection] = []
         self.definitions_by_key: Dict[str, TwineDefinition] = {}
         self.language_codes: List[str] = []
+        self.fallback_to_default = fallback_to_default
 
     def add_language_code(self, code: str):
         """Add a language code, maintaining developer language at position 0."""
@@ -218,7 +235,7 @@ class TwineFile:
 
     def match_fallback_lang(self, translations: dict, lang:str, key:str, value: Any) -> bool:
         # TODO: this method is invoked for each key and lang. Optimize: cache all fallback languages in a dict
-        for fallback_lang in self.fallback_languages(lang):
+        for fallback_lang in self.fallback_languages(lang, self.fallback_to_default):
             if translations.get(fallback_lang) == value:
                 print(f"Warning: key '{key}' in lang '{lang}' matches value from fallback language '{fallback_lang}'")
                 return True

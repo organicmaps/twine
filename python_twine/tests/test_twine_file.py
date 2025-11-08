@@ -203,7 +203,7 @@ es = Prueba
             Path(temp_path).unlink()
 
 
-class TestWriter:
+class TestTwineFileReader:
     @pytest.fixture
     def fixtures_dir(self):
         """Get fixtures directory path."""
@@ -218,6 +218,43 @@ class TestWriter:
         assert twine_file.definitions_by_key["value_with_trailing_space"].translations["en"] == 'value '
         assert twine_file.definitions_by_key["value_wrapped_by_spaces"].translations["en"] == ' value '
         assert twine_file.definitions_by_key["value_wrapped_by_accents"].translations["en"] == '`value`'
+
+class TestTwineFileOptimizations:
+    @pytest.fixture
+    def fixture_twine_file(self) -> TwineFile:
+        twine_file = TwineFile()
+        fixtures_dir = Path(__file__).parent / "fixtures"
+        twine_file.read(str(fixtures_dir / "twine_preoptimized.txt"))
+        return twine_file
+
+    def test_deduplication_local_langs(self, fixture_twine_file: TwineFile):
+        definitionA = fixture_twine_file.definitions_by_key['value_with_local_lang_codes']
+        assert definitionA.translations['pt'] == definitionA.translations['pt-BR']
+        assert definitionA.translations['es'] == definitionA.translations['es-MX']
+
+        fixture_twine_file.fallback_to_default = False
+        fixture_twine_file.optimize_duplicates()
+
+        # Check that 'pt-BR' and 'es-MX' are removed from the TwineFile
+        definitionA = fixture_twine_file.definitions_by_key['value_with_local_lang_codes']
+        assert 'pt-BR' not in definitionA.translations
+        assert 'pt' in definitionA.translations
+        assert 'es-MX' not in definitionA.translations
+        assert 'es' in definitionA.translations
+        assert definitionA.translations['es'] == definitionA.translations['en']
+
+    def test_deduplication_default_lang(self, fixture_twine_file: TwineFile):
+        definitionB = fixture_twine_file.definitions_by_key['value_with_duplicated']
+        assert definitionB.translations['en'] == definitionB.translations['de']
+
+        fixture_twine_file.fallback_to_default = True
+        fixture_twine_file.optimize_duplicates()
+
+        # Check that 'de' lang is removed from the TwineFile because it matches 'en'
+        definitionB = fixture_twine_file.definitions_by_key['value_with_duplicated']
+        assert 'de' not in definitionB.translations
+        assert 'fr' in definitionB.translations
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
