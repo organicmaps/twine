@@ -3,12 +3,6 @@ Android XML strings formatter.
 """
 
 import re
-
-REGEX_CDATA_BRACKET = re.compile(r"<(?!(\/?(\!\[CDATA)))")
-REGEX_TAG_BRACKET = re.compile(
-    r"<(?!(\/?(b|em|i|cite|dfn|big|small|font|tt|s|strike|del|u|super|sub|ul|li|br|div|span|p|a|\!\[CDATA))\b)")
-REGEX_RESORCE_IDENTIFIER = re.compile(r"@(?!([a-z\.]+:)?[a-z+]+\/[a-zA-Z_]+)") # @[<package_name>:]<resource_type>/<resource_name>
-
 import html
 from typing import Dict, Optional, TextIO
 from xml.etree import ElementTree as ET
@@ -21,6 +15,11 @@ from twine.placeholders import (
     convert_placeholders_from_twine_to_android,
     number_of_twine_placeholders,
 )
+
+REGEX_CDATA_BRACKET = re.compile(r"<(?!(\/?(\!\[CDATA)))")
+REGEX_TAG_BRACKET = re.compile(
+    r"<(?!(\/?(b|em|i|cite|dfn|big|small|font|tt|s|strike|del|u|super|sub|ul|li|br|div|span|p|a|\!\[CDATA))\b)")
+REGEX_RESORCE_IDENTIFIER = re.compile(r"@(?!([a-z\.]+:)?[a-z+]+\/[a-zA-Z_]+)") # @[<package_name>:]<resource_type>/<resource_name>
 
 
 def inner_xml(node:Element) -> str:
