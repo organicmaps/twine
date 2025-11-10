@@ -159,7 +159,7 @@ class TwineDefinition:
         """Check if this definition has plural translations."""
         return bool(self.plural_translations)
 
-    def copy_lang(self, lang: str) -> TwineDefinition:
+    def copy_lang(self, lang: str) -> "TwineDefinition":
         """ Copy translation for one language into new definition. """
         new_def = TwineDefinition(self.key)
         new_def._comment = self._comment
