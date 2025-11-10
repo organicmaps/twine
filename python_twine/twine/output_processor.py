@@ -3,8 +3,8 @@ Output processor for filtering and processing Twine files.
 """
 
 import re
-import copy
 from typing import Optional, List, Dict
+
 from twine.twine_file import TwineFile, TwineSection
 
 
@@ -107,7 +107,7 @@ class OutputProcessor:
                     continue
 
                 # Create new definition with the translation
-                new_definition = copy.deepcopy(definition)
+                new_definition = definition.copy_lang(language)
                 new_definition.translations[language] = value
 
                 # Handle plural translations

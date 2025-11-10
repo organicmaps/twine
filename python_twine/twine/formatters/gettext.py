@@ -8,6 +8,11 @@ from typing import Optional, TextIO
 from twine.formatters import AbstractFormatter
 from twine import __version__
 
+COMMENT_REGEX = re.compile(r'#\.\s*"(.*)"$', re.MULTILINE)
+SECTION_REGEX = re.compile(r'# SECTION: (.+)$', re.MULTILINE)
+KEY_REGEX = re.compile(r'msgctxt\s+"(.*)"$', re.MULTILINE)
+VALUE_REGEX = re.compile(r'msgid\s+"(.*)"$', re.MULTILINE)
+
 
 class GettextFormatter(AbstractFormatter):
     """Formatter for Gettext .po files."""
@@ -27,10 +32,6 @@ class GettextFormatter(AbstractFormatter):
 
     def read(self, io: TextIO, lang: str):
         """Read Gettext .po file."""
-        comment_regex = re.compile(r'#\.\s*"(.*)"$', re.MULTILINE)
-        section_regex = re.compile(r'# SECTION: (.+)$', re.MULTILINE)
-        key_regex = re.compile(r'msgctxt\s+"(.*)"$', re.MULTILINE)
-        value_regex = re.compile(r'msgid\s+"(.*)"$', re.MULTILINE)
 
         # Read file in chunks separated by double newlines
         content = io.read()
@@ -46,22 +47,22 @@ class GettextFormatter(AbstractFormatter):
             comment = None
 
             # Extract comment
-            comment_match = comment_regex.search(item)
+            comment_match = COMMENT_REGEX.search(item)
             if comment_match:
                 comment = comment_match.group(1)
 
             # Extract section
-            section_match = section_regex.search(item)
+            section_match = SECTION_REGEX.search(item)
             if section_match:
                 current_sections = section_match.group(1)
 
             # Extract key (msgctxt)
-            key_match = key_regex.search(item)
+            key_match = KEY_REGEX.search(item)
             if key_match:
                 key = key_match.group(1).replace('\\"', '"')
 
             # Extract value (msgid)
-            value_match = value_regex.search(item)
+            value_match = VALUE_REGEX.search(item)
             if value_match:
                 # Handle multiline strings: "string"\n"continuation"
                 value = value_match.group(1)

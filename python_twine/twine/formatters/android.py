@@ -3,6 +3,12 @@ Android XML strings formatter.
 """
 
 import re
+
+REGEX_CDATA_BRACKET = re.compile(r"<(?!(\/?(\!\[CDATA)))")
+REGEX_TAG_BRACKET = re.compile(
+    r"<(?!(\/?(b|em|i|cite|dfn|big|small|font|tt|s|strike|del|u|super|sub|ul|li|br|div|span|p|a|\!\[CDATA))\b)")
+REGEX_RESORCE_IDENTIFIER = re.compile(r"@(?!([a-z\.]+:)?[a-z+]+\/[a-zA-Z_]+)") # @[<package_name>:]<resource_type>/<resource_name>
+
 import html
 from typing import Dict, Optional, TextIO
 from xml.etree import ElementTree as ET
@@ -277,12 +283,10 @@ class AndroidFormatter(AbstractFormatter):
 
         if has_placeholders or self.options.get("escape_all_tags"):
             # Escape all < except <![CDATA
-            angle_bracket_regex = re.compile(r"<(?!(\/?(\!\[CDATA)))")
+            angle_bracket_regex = REGEX_CDATA_BRACKET
         else:
             # Escape < except supported tags
-            angle_bracket_regex = re.compile(
-                r"<(?!(\/?(b|em|i|cite|dfn|big|small|font|tt|s|strike|del|u|super|sub|ul|li|br|div|span|p|a|\!\[CDATA))\b)"
-            )
+            angle_bracket_regex = REGEX_TAG_BRACKET
 
         def is_non_tag(result:str, i:int):
             if inside_cdata(result, i):
@@ -296,8 +300,7 @@ class AndroidFormatter(AbstractFormatter):
         )
 
         # escape non resource identifier @ signs (http://developer.android.com/guide/topics/resources/accessing-resources.html#ResourcesFromXml)
-        resource_identifier_regex = re.compile(r"@(?!([a-z\.]+:)?[a-z+]+\/[a-zA-Z_]+)")  # @[<package_name>:]<resource_type>/<resource_name>
-        result = resource_identifier_regex.sub(r"\\@", result)
+        result = REGEX_RESORCE_IDENTIFIER.sub(r"\\@", result)
 
         return result
 
