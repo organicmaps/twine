@@ -162,7 +162,7 @@ class TwineDefinition:
     def copy_lang(self, lang: str) -> "TwineDefinition":
         """ Copy translation for one language into new definition. """
         new_def = TwineDefinition(self.key)
-        new_def._comment = self._comment
+        new_def._comment = self.comment
         new_def.tags = copy.deepcopy(self.tags)
         if lang in self.translations:
             new_def.translations[lang] = self.translations[lang]
