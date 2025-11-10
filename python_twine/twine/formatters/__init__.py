@@ -12,6 +12,14 @@ import twine
 from twine.twine_file import TwineFile, TwineDefinition, TwineSection
 from twine.output_processor import OutputProcessor
 
+
+LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE = r"[a-z]{2}(?:-[A-Za-z]{2})?"
+
+ONLY_LANGUAGE_AND_REGION_REGEX = re.compile(
+    rf"^{LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE}$", re.IGNORECASE
+)
+
+
 def flatten(input: Optional[List[List[str]]]) -> List[str]:
     if input is None:
         return []
@@ -34,7 +42,6 @@ class AbstractFormatter(ABC):
     """Base class for all format formatters."""
 
     SUPPORTS_PLURAL = False
-    LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE = r"[a-z]{2}(?:-[A-Za-z]{2})?"
 
     def __init__(self):
         self.twine_file = TwineFile()
@@ -204,15 +211,12 @@ class AbstractFormatter(ABC):
 
     def determine_language_given_path(self, path: str) -> Optional[str]:
         """Determine the language code from a file path."""
-        only_language_and_region = re.compile(
-            rf"^{self.LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE}$", re.IGNORECASE
-        )
 
         path_obj = Path(path)
         basename = path_obj.stem
 
         # Check if basename is a language code
-        if only_language_and_region.match(basename):
+        if ONLY_LANGUAGE_AND_REGION_REGEX.match(basename):
             return basename
 
         # Check if basename is in known language codes
@@ -222,7 +226,7 @@ class AbstractFormatter(ABC):
         # Check path segments in reverse order
         parts = path_obj.parts
         for segment in reversed(parts):
-            if only_language_and_region.match(segment):
+            if ONLY_LANGUAGE_AND_REGION_REGEX.match(segment):
                 return segment
 
         return None

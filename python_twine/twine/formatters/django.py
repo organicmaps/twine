@@ -7,6 +7,10 @@ from typing import Optional, TextIO
 
 from twine.formatters import AbstractFormatter
 
+COMMENT_REGEX = re.compile(r'^\s*#\. *"?(.*)"?$')
+SECTION_REGEX = re.compile(r'^\s*# -{9} (.+) -{9} #$')
+KEY_REGEX = re.compile(r'^msgid *"(.*)"$')
+VALUE_REGEX = re.compile(r'^msgstr *"(.*)"$', re.MULTILINE)
 
 class DjangoFormatter(AbstractFormatter):
     """Formatter for Django .po files."""
@@ -26,10 +30,6 @@ class DjangoFormatter(AbstractFormatter):
 
     def read(self, io: TextIO, lang: str):
         """Read Django .po file."""
-        comment_regex = re.compile(r'^\s*#\. *"?(.*)"?$')
-        section_regex = re.compile(r'^\s*# -{9} (.+) -{9} #$')
-        key_regex = re.compile(r'^msgid *"(.*)"$')
-        value_regex = re.compile(r'^msgstr *"(.*)"$', re.MULTILINE)
 
         key = None
         value = None
@@ -38,24 +38,24 @@ class DjangoFormatter(AbstractFormatter):
 
         for line in io:
             # Extract comment
-            comment_match = comment_regex.match(line)
+            comment_match = COMMENT_REGEX.match(line)
             if comment_match:
                 comment = comment_match.group(1)
                 continue
 
-            section_match = section_regex.match(line)
+            section_match = SECTION_REGEX.match(line)
             if section_match:
                 current_section = section_match.group(1)
                 comment = None
                 continue
 
             # Extract key (msgid)
-            key_match = key_regex.match(line)
+            key_match = KEY_REGEX.match(line)
             if key_match:
                 key = key_match.group(1).replace('\\"', '"')
 
             # Extract value (msgstr)
-            value_match = value_regex.match(line)
+            value_match = VALUE_REGEX.match(line)
             if value_match:
                 # Handle multiline strings
                 value = value_match.group(1)

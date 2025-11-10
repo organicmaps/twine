@@ -17,6 +17,28 @@ PLACEHOLDER_REGEX = re.compile(
     r"%" + PLACEHOLDER_PARAMETER_FLAGS_WIDTH_PRECISION_LENGTH + PLACEHOLDER_TYPES
 )
 
+TWINE_PLACEHOLDER_REGEX = re.compile(
+    r"(%" + PLACEHOLDER_PARAMETER_FLAGS_WIDTH_PRECISION_LENGTH + r")@"
+)
+
+PLACEHOLDER_SYNTAX = (
+        PLACEHOLDER_PARAMETER_FLAGS_WIDTH_PRECISION_LENGTH + PLACEHOLDER_TYPES
+)
+SINGLE_PERCENT_REGEX = re.compile(r"([^%])(%)(?!(%|" + PLACEHOLDER_SYNTAX + r"))")
+
+NON_NUMBERED_PLACEHOLDER_REGEX = re.compile(
+    "%(" + PLACEHOLDER_FLAGS_WIDTH_PRECISION_LENGTH + PLACEHOLDER_TYPES + ")"
+)
+
+ANDROID_PLACEHOLDER_REGEX = re.compile(
+    "(%" + PLACEHOLDER_PARAMETER_FLAGS_WIDTH_PRECISION_LENGTH + ")s"
+)
+PYTHON_PLACEHOLDER_REGEX = re.compile(
+    r"%\([a-zA-Z0-9_-]+\)"
+    + PLACEHOLDER_PARAMETER_FLAGS_WIDTH_PRECISION_LENGTH
+    + PLACEHOLDER_TYPES
+)
+
 
 def number_of_twine_placeholders(input_str: str) -> int:
     """Count the number of printf-style placeholders in a string."""
@@ -25,10 +47,7 @@ def number_of_twine_placeholders(input_str: str) -> int:
 
 def convert_twine_string_placeholder(input_str: str) -> str:
     """Convert Twine string placeholder from %@ to %s."""
-    pattern = re.compile(
-        r"(%" + PLACEHOLDER_PARAMETER_FLAGS_WIDTH_PRECISION_LENGTH + r")@"
-    )
-    return pattern.sub(r"\1s", input_str)
+    return TWINE_PLACEHOLDER_REGEX.sub(r"\1s", input_str)
 
 
 def convert_placeholders_from_twine_to_android(input_str: str) -> str:
@@ -53,21 +72,13 @@ def convert_placeholders_from_twine_to_android(input_str: str) -> str:
 
     # Got placeholders -> need to double single percent signs
     # % -> %% (but %% -> %%, %d -> %d)
-    placeholder_syntax = (
-        PLACEHOLDER_PARAMETER_FLAGS_WIDTH_PRECISION_LENGTH + PLACEHOLDER_TYPES
-    )
-    single_percent_regex = re.compile(r"([^%])(%)(?!(%|" + placeholder_syntax + r"))")
-    value = single_percent_regex.sub(r"\1%%", value)
+    value = SINGLE_PERCENT_REGEX.sub(r"\1%%", value)
 
     if num_placeholders < 2:
         return value
 
     # Number placeholders if there are multiple
-    non_numbered_placeholder_regex = re.compile(
-        r"%(" + PLACEHOLDER_FLAGS_WIDTH_PRECISION_LENGTH + PLACEHOLDER_TYPES + r")"
-    )
-
-    non_numbered_matches = non_numbered_placeholder_regex.findall(value)
+    non_numbered_matches = NON_NUMBERED_PLACEHOLDER_REGEX.findall(value)
     num_non_numbered = len(non_numbered_matches)
 
     if num_non_numbered == 0:
@@ -86,17 +97,14 @@ def convert_placeholders_from_twine_to_android(input_str: str) -> str:
         index += 1
         return f"%{index}${match.group(1)}"
 
-    value = non_numbered_placeholder_regex.sub(number_placeholder, value)
+    value = NON_NUMBERED_PLACEHOLDER_REGEX.sub(number_placeholder, value)
 
     return value
 
 
 def convert_placeholders_from_android_to_twine(input_str: str) -> str:
     """Convert Android string placeholders (%s) to Twine format (%@)."""
-    placeholder_regex = re.compile(
-        r"(%" + PLACEHOLDER_PARAMETER_FLAGS_WIDTH_PRECISION_LENGTH + r")s"
-    )
-    return placeholder_regex.sub(r"\1@", input_str)
+    return ANDROID_PLACEHOLDER_REGEX.sub(r"\1@", input_str)
 
 
 def convert_placeholders_from_twine_to_flash(input_str: str) -> str:
@@ -132,9 +140,4 @@ def contains_python_specific_placeholder(input_str: str) -> bool:
     Python supports placeholders like %(amount)03d
     See https://docs.python.org/3/library/stdtypes.html#printf-style-string-formatting
     """
-    pattern = re.compile(
-        r"%\([a-zA-Z0-9_-]+\)"
-        + PLACEHOLDER_PARAMETER_FLAGS_WIDTH_PRECISION_LENGTH
-        + PLACEHOLDER_TYPES
-    )
-    return pattern.search(input_str) is not None
+    return PYTHON_PLACEHOLDER_REGEX.search(input_str) is not None

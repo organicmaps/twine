@@ -4,6 +4,7 @@ Core data models for Twine.
 
 import re
 from typing import Dict, List, Optional, Any
+import copy
 
 FALLBACK_LANGS_MAPPING = {
     "zh-CN": "zh-Hans",  # Chinese Simplified
@@ -157,6 +158,18 @@ class TwineDefinition:
     def is_plural(self) -> bool:
         """Check if this definition has plural translations."""
         return bool(self.plural_translations)
+
+    def copy_lang(self, lang: str) -> TwineDefinition:
+        """ Copy translation for one language into new definition. """
+        new_def = TwineDefinition(self.key)
+        new_def._comment = self._comment
+        new_def.tags = copy.deepcopy(self.tags)
+        if lang in self.translations:
+            new_def.translations[lang] = self.translations[lang]
+
+        if lang in self.plural_translations:
+            new_def.plural_translations[lang] = self.plural_translations[lang]
+        return new_def
 
 
 class TwineSection:
