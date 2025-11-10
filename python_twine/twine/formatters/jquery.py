@@ -21,6 +21,10 @@ class JQueryFormatter(AbstractFormatter):
     def default_file_name(self) -> str:
         return "localize.json"
 
+    def output_path_for_language(self, lang: str) -> str:
+        """Return the output path component for a language."""
+        return f"{lang}.json"
+
     def determine_language_given_path(self, path: str) -> Optional[str]:
         """Extract language from filename like strings-en-US.json."""
         from pathlib import Path
