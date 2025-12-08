@@ -96,12 +96,13 @@ class Runner:
         """Generate localization files for all languages."""
         if self.options.get("validate"):
             self.validate_twine_file()
+        create_folders = self.options.get("create_folders")
 
         output_path = Path(self.options["output_path"])
 
         # Create output directory if needed
         if not output_path.is_dir():
-            if self.options.get("create_folders"):
+            if create_folders:
                 output_path.mkdir(parents=True, exist_ok=True)
             else:
                 raise TwineError(f"Directory does not exist: {output_path}")
@@ -112,59 +113,37 @@ class Runner:
         file_name = self.options.get("file_name") or formatter.default_file_name()
         encoding = self.options.get("encoding", "UTF-8")
 
-        if self.options.get("create_folders"):
-            # Create folders for all languages
-            for lang in self.twine_file.language_codes:
-                lang_path = output_path / formatter.output_path_for_language(lang)
-                lang_path.mkdir(parents=True, exist_ok=True)
+        language_found = False
 
-                file_path = lang_path / file_name
-                output = formatter.format_file(lang)
+        # Create folders for all languages
+        for lang in self.twine_file.language_codes:
+            lang_path = output_path / formatter.output_path_for_language(lang)
+            lang_path.mkdir(parents=True, exist_ok=True)
 
-                if not output:
-                    print(
-                        f"Skipping {file_path} since it would not contain any translations.",
-                        file=twine.stdout,
-                    )
-                    continue
+            file_path = lang_path / file_name
+            if not file_path.exists() and not create_folders:
+                # Don't create file for 'lang'. Only update existing files.
+                continue
 
-                with open(file_path, "w", encoding=encoding) as f:
-                    f.write(output)
+            output = formatter.format_file(lang)
+            language_found = True
 
-                print(f"Generated {file_path}", file=twine.stdout)
-        else:
-            # Find existing language directories
-            language_found = False
-
-            for item in output_path.iterdir():
-                if not item.is_dir():
-                    continue
-
-                lang = formatter.determine_language_given_path(str(item))
-                if not lang:
-                    continue
-
-                language_found = True
-
-                file_path = item / file_name
-                output = formatter.format_file(lang)
-
-                if not output:
-                    print(
-                        f"Skipping {file_path} since it would not contain any translations.",
-                        file=twine.stdout,
-                    )
-                    continue
-
-                with open(file_path, "w", encoding=encoding) as f:
-                    f.write(output)
-
-                print(f"Generated {file_path}", file=twine.stdout)
-
-            if not language_found:
-                raise TwineError(
-                    f"Failed to generate any files: No languages found at {output_path}"
+            if not output:
+                print(
+                    f"Skipping {file_path} since it would not contain any translations.",
+                    file=twine.stdout,
                 )
+                continue
+
+            with open(file_path, "w", encoding=encoding) as f:
+                f.write(output)
+
+            print(f"Generated {file_path}", file=twine.stdout)
+
+        if not language_found:
+            raise TwineError(
+                f"Failed to generate any files: No languages found at {output_path}"
+            )
 
     def consume_localization_file(self):
         """Import translations from a localization file."""
