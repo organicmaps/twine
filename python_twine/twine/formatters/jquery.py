@@ -30,7 +30,7 @@ class JQueryFormatter(AbstractFormatter):
         from pathlib import Path
 
         basename = Path(path).name
-        match = re.match(r"^.+([a-z]{2}-[A-Z]{2})\.json$", basename)
+        match = re.match(r"^.*?([a-z]{2,3}-[A-Z]{2})\.json$", basename)
 
         if match:
             return match.group(1)

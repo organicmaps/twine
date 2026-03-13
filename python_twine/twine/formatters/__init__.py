@@ -13,7 +13,7 @@ from twine.twine_file import TwineFile, TwineDefinition, TwineSection
 from twine.output_processor import OutputProcessor
 
 
-LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE = r"[a-z]{2}(?:-[A-Za-z]{2})?"
+LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE = r"[a-z]{2,3}(?:-[A-Za-z]{2,4})?"
 
 ONLY_LANGUAGE_AND_REGION_REGEX = re.compile(
     rf"^{LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE}$", re.IGNORECASE
