@@ -367,6 +367,7 @@ class Runner:
             for definition in section.definitions:
                 all_keys.add(definition.key)
 
+        # Compare collected keys
         unused = all_keys - total_grepped
         if len(unused):
             print(f"Found {len(unused)} definitions/keys which are no longer used in the codebase:")
@@ -377,11 +378,13 @@ class Runner:
         return len(unused)
 
     def _grep_core_strings(self) -> Set[str]:
+        # Search for localized strings in C++ source code.
         if self.options['core_src_root'] is None:
             return set()
         return grep_folder(self.options['core_src_root'], ["*.h", "*.hpp", "*.cpp"], CORE_RE)
 
     def _grep_ios_strings(self) -> Set[str]:
+        # Search for localized strings in iOS source code.
         if self.options['ios_src_root'] is None:
             return set()
         root_path = self.options['ios_src_root']
@@ -390,6 +393,7 @@ class Runner:
                grep_folder(root_path, ["*.m", "*.mm", "*.swift", "*.h"], IOS_XML_RE)
 
     def _grep_android_strings(self) -> Set[str]:
+        # Search for localized strings in Android source code and resources.
         if self.options['android_src_root'] is None:
             return set()
         root_path = self.options['android_src_root']

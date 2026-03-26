@@ -3,16 +3,33 @@ from typing import Set, List, Iterable
 from glob import glob
 
 def grep_folder(path:str, files_patterns:List[str], search_regex:re.Pattern) -> Set[str]:
+    """
+    Scan directory for files in `path` directory by files pattern (e.g. "*.cpp", "*.swift")
+    and scans each files with search_regex to extract all matches.
+    """
     keys = set()
     for filepath in find_files_recursive(path, files_patterns):
         keys.update(find_keys_in_file(path + "/" + filepath, search_regex))
     return keys
 
 def find_files_recursive(root_path:str, files_patterns:List[str]) -> Iterable[str]:
+    """
+    Scan directory for files matching patterns. Patterns expected in format "*.java", "strings.xml", etc.
+
+    :return: relative files paths.
+    """
     for pttrn in files_patterns:
         yield from glob(f"**/{pttrn}", root_dir=root_path, recursive=True)
 
 def find_keys_in_file(filepath:str, search_regex:re.Pattern)->List[str]:
+    """
+    Scan file at `filepath` using regexp. All groups found by `search_regex` are merged
+    to result list.
+
+    :param filepath: path to text file
+    :param search_regex: pattern to search source code for a string key
+    :return: list of found keys
+    """
     try:
         keys = []
         for line in open(filepath, "r"):
