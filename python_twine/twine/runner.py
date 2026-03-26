@@ -370,7 +370,7 @@ class Runner:
         unused = all_keys - total_grepped
         if len(unused):
             print(f"Found {len(unused)} definitions/keys which are no longer used in the codebase:")
-            print(*unused, sep="\n")
+            print(*sorted(unused), sep="\n")
             raise Exception("Unused definitions found")
         else:
             print("All good. There are no unused translation definitions/keys.")

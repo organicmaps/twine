@@ -18,7 +18,7 @@ def find_keys_in_file(filepath:str, search_regex:re.Pattern)->List[str]:
         for line in open(filepath, "r"):
             m = search_regex.search(line)
             if m is not None:
-                keys += m.groups()
+                keys += [k for k in m.groups() if k is not None]
         return keys
     except UnicodeDecodeError:
         return []
