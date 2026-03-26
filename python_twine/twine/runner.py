@@ -390,7 +390,7 @@ class Runner:
         root_path = self.options['ios_src_root']
         return grep_folder(root_path, ["*.m", "*.mm", "*.swift", "*.h"], IOS_RE) | \
                grep_folder(root_path, ["*.m", "*.mm", "*.swift", "*.h"], IOS_NS_RE) | \
-               grep_folder(root_path, ["*.m", "*.mm", "*.swift", "*.h"], IOS_XML_RE)
+               grep_folder(root_path, ["*.xib"], IOS_XML_RE)
 
     def _grep_android_strings(self) -> Set[str]:
         # Search for localized strings in Android source code and resources.
