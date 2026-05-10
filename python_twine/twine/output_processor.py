@@ -36,6 +36,9 @@ class OutputProcessor:
         fallback_mapping = {
             "zh-CN": "zh-Hans",  # Chinese Simplified
             "zh-TW": "zh-Hant",  # Chinese Traditional
+            # 3-letter language codes don't match the regex below, so map explicitly.
+            "yue-HK": "yue",  # Cantonese (Hong Kong)
+            "yue-MO": "yue",  # Cantonese (Macau)
         }
 
         fallbacks = []
