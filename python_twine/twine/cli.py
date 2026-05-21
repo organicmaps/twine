@@ -130,7 +130,7 @@ class CLI:
         parser.add_argument(
             "-f",
             "--format",
-            help="Localization file format (android, apple, gettext, jquery, django, tizen, flash)",
+            help="Localization file format (android, apple, gettext, jquery, django, tizen, flash, qt)",
         )
         parser.add_argument(
             "--tags",

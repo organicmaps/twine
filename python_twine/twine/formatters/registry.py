@@ -69,6 +69,7 @@ def register_all_formatters():
     from twine.formatters.flash import FlashFormatter
     from twine.formatters.gettext import GettextFormatter
     from twine.formatters.jquery import JQueryFormatter
+    from twine.formatters.qt import QtFormatter
     from twine.formatters.tizen import TizenFormatter
 
     registry = get_registry()
@@ -81,6 +82,7 @@ def register_all_formatters():
     registry.register(FlashFormatter())
     registry.register(GettextFormatter())
     registry.register(JQueryFormatter())
+    registry.register(QtFormatter())
     registry.register(TizenFormatter())
 
 

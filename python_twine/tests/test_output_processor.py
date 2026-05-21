@@ -136,3 +136,52 @@ class TestTranslationFallback:
         result = processor.process("de")
 
         assert result.definitions_by_key["key1"].translations["de"] == "value1-fr"
+
+
+class TestPluralEdgeCases:
+    """Regression tests for plural-definition handling that previously
+    raised KeyError / TypeError before the OutputProcessor fix."""
+
+    def test_include_translated_with_singular_target_does_not_raise(self):
+        """A plural definition whose target language has only a non-plural
+        translation must not raise under include='translated'. The plural
+        slot stays absent — the formatter then emits it as a regular message."""
+        twine_file = TwineFile()
+        twine_file.language_codes = ["en", "ja"]
+        section = TwineSection("Section")
+        twine_file.sections.append(section)
+
+        d = TwineDefinition("partial")
+        d.translations["en"] = "%d items"
+        d.translations["ja"] = "アイテム"
+        d.plural_translations["en"] = {"one": "%d item", "other": "%d items"}
+        twine_file.definitions_by_key["partial"] = d
+        section.definitions.append(d)
+
+        result = OutputProcessor(twine_file, {"include": "translated"}).process("ja")
+
+        processed = result.definitions_by_key["partial"]
+        assert processed.translations["ja"] == "アイテム"
+        assert "ja" not in processed.plural_translations
+
+    def test_no_plural_fallback_available_does_not_raise(self):
+        """When no fallback language has plural data, the OutputProcessor
+        must skip the plural augmentation rather than assigning None and
+        TypeError-ing on `"other" not in None`."""
+        twine_file = TwineFile()
+        twine_file.language_codes = ["en", "fr"]
+        section = TwineSection("Section")
+        twine_file.sections.append(section)
+
+        d = TwineDefinition("isolated")
+        d.translations["en"] = "items"
+        d.translations["fr"] = "éléments"
+        # Plural data only for a language that is not in fr's fallback chain.
+        d.plural_translations["es"] = {"one": "artículo", "other": "artículos"}
+        twine_file.definitions_by_key["isolated"] = d
+        section.definitions.append(d)
+
+        result = OutputProcessor(twine_file, {"include": "all"}).process("fr")
+
+        assert "isolated" in result.definitions_by_key
+        assert result.definitions_by_key["isolated"].translations["fr"] == "éléments"
