@@ -89,6 +89,10 @@ Twine currently supports the following output formats:
 * [Django PO Files][djangopo] (format: django)
 * [Tizen String Resources][tizen] (format: tizen)
 * [Flash/Flex Properties][flash] (format: flash)
+* [Qt Linguist TS Files][qtts] (format: qt) — _python_twine only_
+    * ID-based `<message id="…">` messages for `qtTrId()` lookup.
+    * Numerus (plural) support via Qt's positional `<numerusform>` rules.
+    * Definition comments emitted as `<extracomment>` for translators.
 
 If you would like to enable Twine to create localization files in another format, read the wiki page on how to create an appropriate formatter.
 
@@ -281,4 +285,5 @@ Many thanks to all of the contributors to the Twine project, including:
 [djangopo]: https://docs.djangoproject.com/en/dev/topics/i18n/translation/
 [tizen]: https://developer.tizen.org/documentation/articles/localization
 [flash]: http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/mx/resources/IResourceManager.html#getString()
+[qtts]: https://doc.qt.io/qt-6/linguist-ts-file-format.html
 [printf]: https://en.wikipedia.org/wiki/Printf_format_string

@@ -118,10 +118,16 @@ class OutputProcessor:
                     if language not in new_definition.plural_translations \
                             and include_option != "translated":
                         lng = definition.find_plural_lang_fallback(fallbacks)
-                        new_definition.plural_translations[language] = definition.plural_translation_for_lang(lng)
+                        if lng is not None:
+                            new_definition.plural_translations[language] = definition.plural_translation_for_lang(lng)
 
-                    # Ensure 'other' key exists for plurals
-                    if "other" not in new_definition.plural_translations[language]:
+                    # Ensure 'other' key exists for plurals. Skip when no
+                    # plural slot exists for the target language (e.g.
+                    # include=translated and only a non-plural translation
+                    # is present) — the definition falls through to the
+                    # non-plural path in the formatter.
+                    if language in new_definition.plural_translations \
+                            and "other" not in new_definition.plural_translations[language]:
                         new_definition.plural_translations[language]["other"] = value
 
                 new_section.definitions.append(new_definition)
