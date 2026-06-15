@@ -101,27 +101,6 @@ class CLI:
             help="Enable pedantic validation (e.g., require tags)",
         )
 
-        # validate-unused-strings
-        validate_unused = subparsers.add_parser(
-            "validate-unused-strings", help="Search through Android and iOS source code to find unused strings"
-        )
-        validate_unused.add_argument("twine_file", help="Path to Twine data file")
-        validate_unused.add_argument(
-            "--android-src-root",
-            help="Path to Android source root directory",
-            default=None
-        )
-        validate_unused.add_argument(
-            "--ios-src-root",
-            help="Path to iOS source root directory",
-            default=None
-        )
-        validate_unused.add_argument(
-            "--core-src-root",
-            help="Path to C++ source root directory",
-            default=None
-        )
-
         return parser
 
     @staticmethod

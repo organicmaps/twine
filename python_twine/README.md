@@ -73,18 +73,6 @@ python twine_cli.py validate-twine-file \
 
 This command looks for keys duplicates, missing tags, extra symbols in key name, wrong placeholder formats.
 
-Also, you can get usage report by running:
-
-```bash
-python twine_cli.py validate-unused-strings \
-    $OMAPS_REPO/data/strings/strings.txt
-    --android-src-root $OMAPS_REPO/android
-    --core-src-root $OMAPS_REPO/libs
-    --ios-src-root $OMAPS_REPO/iphone
-```
-
-This command will print list of string in `strings.txt` which are not found in source code.
-
 ## Project Structure
 
 ```

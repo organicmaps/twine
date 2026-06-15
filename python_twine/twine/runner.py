@@ -4,23 +4,12 @@ Runner orchestrates command execution for Twine.
 
 import re
 from pathlib import Path
-from typing import Optional, Dict, Any, Iterable, Tuple, Set
+from typing import Optional, Dict, Any, Iterable, Tuple
 
 import twine
 from twine import TwineError
 from twine.formatters import AbstractFormatter
-from twine.tools.grep import grep_folder
 from twine.twine_file import TwineFile
-
-CORE_RE = re.compile(r'\bGetLocalizedString\("(.*?)"\)')
-
-ANDROID_JAVA_RE = re.compile(r'\bR\.string\.([\w_]*)')
-ANDROID_JAVA_PLURAL_RE = re.compile(r'\bR\.plurals\.([\w_]*)')
-ANDROID_XML_RE = re.compile(r'@string/(.*?)\W')
-
-IOS_RE = re.compile(r'\bL\(.*?"(\w+)".*?(?:"(\w+)")?\)')
-IOS_NS_RE = re.compile(r'\bNSLocalizedString\(\s*?@?"(\w+)"')
-IOS_XML_RE = re.compile(r'\bvalue=\"(.*?)\"')
 
 
 class NullOutput:
@@ -347,59 +336,6 @@ class Runner:
                 print(f"WARNING: Definition '{key}' has no tags")
 
         print("Validation passed")
-
-    def validate_unused_strings(self):
-        if self.options['android_src_root'] is None and self.options['ios_src_root'] is None \
-            and self.options['core_src_root'] is None:
-            raise Exception("Please specify source path with --android-src-root or --ios-src-root or --core-src-root")
-
-        core_keys = self._grep_core_strings()
-        ios_keys = self._grep_ios_strings()
-        android_keys = self._grep_android_strings()
-
-        total_grepped = core_keys | ios_keys | android_keys
-
-        print(f"Total strings grepped: {len(total_grepped)} - core: {len(core_keys)}, iOS: {len(ios_keys)}, android: {len(android_keys)}")
-
-        all_keys = set()
-        # Collect all keys from twine_file
-        for section in self.twine_file.sections:
-            for definition in section.definitions:
-                all_keys.add(definition.key)
-
-        # Compare collected keys
-        unused = all_keys - total_grepped
-        if len(unused):
-            print(f"Found {len(unused)} definitions/keys which are no longer used in the codebase:")
-            print(*sorted(unused), sep="\n")
-            raise Exception("Unused definitions found")
-        else:
-            print("All good. There are no unused translation definitions/keys.")
-        return len(unused)
-
-    def _grep_core_strings(self) -> Set[str]:
-        # Search for localized strings in C++ source code.
-        if self.options['core_src_root'] is None:
-            return set()
-        return grep_folder(self.options['core_src_root'], ["*.h", "*.hpp", "*.cpp"], CORE_RE)
-
-    def _grep_ios_strings(self) -> Set[str]:
-        # Search for localized strings in iOS source code.
-        if self.options['ios_src_root'] is None:
-            return set()
-        root_path = self.options['ios_src_root']
-        return grep_folder(root_path, ["*.m", "*.mm", "*.swift", "*.h"], IOS_RE) | \
-               grep_folder(root_path, ["*.m", "*.mm", "*.swift", "*.h"], IOS_NS_RE) | \
-               grep_folder(root_path, ["*.xib"], IOS_XML_RE)
-
-    def _grep_android_strings(self) -> Set[str]:
-        # Search for localized strings in Android source code and resources.
-        if self.options['android_src_root'] is None:
-            return set()
-        root_path = self.options['android_src_root']
-        return grep_folder(root_path, ["*.java"], ANDROID_JAVA_RE) | \
-               grep_folder(root_path, ["*.java"], ANDROID_JAVA_PLURAL_RE) | \
-               grep_folder(root_path, ["*.xml"],  ANDROID_XML_RE)
 
     def _get_formatter(self):
         """Get the appropriate formatter based on options."""
