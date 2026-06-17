@@ -2,7 +2,6 @@
 Runner orchestrates command execution for Twine.
 """
 
-import re
 from pathlib import Path
 from typing import Optional, Dict, Any, Iterable, Tuple
 
