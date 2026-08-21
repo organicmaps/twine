@@ -5,8 +5,8 @@ Integration test for Twine Python implementation.
 import tempfile
 from pathlib import Path
 
-from twine.twine_file import TwineFile
 from twine.formatters.registry import get_registry
+from twine.twine_file import TwineFile
 
 
 def test_complete_workflow():

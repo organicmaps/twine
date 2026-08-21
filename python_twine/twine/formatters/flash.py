@@ -3,7 +3,7 @@ Flash/Flex properties formatter.
 """
 
 import re
-from typing import Optional, TextIO
+from typing import TextIO
 
 from twine.formatters import AbstractFormatter
 from twine.placeholders import (
@@ -24,7 +24,7 @@ class FlashFormatter(AbstractFormatter):
     def default_file_name(self) -> str:
         return "resources.properties"
 
-    def set_translation_for_key(self, key: str, lang: str, value: str, section_name: Optional[str]):
+    def set_translation_for_key(self, key: str, lang: str, value: str, section_name: str | None):
         """Convert Flash placeholders to Twine format."""
         value = convert_placeholders_from_flash_to_twine(value)
         super().set_translation_for_key(key, lang, value, section_name)
@@ -77,7 +77,7 @@ class FlashFormatter(AbstractFormatter):
         """Format section header."""
         return f"## {section.name} ##\n"
 
-    def format_comment(self, definition, lang: str) -> Optional[str]:
+    def format_comment(self, definition, lang: str) -> str | None:
         """Format comment."""
         if definition.comment:
             return f"# {definition.comment}\n"

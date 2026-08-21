@@ -4,7 +4,6 @@ Placeholder conversion utilities for different localization formats.
 
 import re
 
-
 # Note: the ` ` (single space) flag is NOT supported
 PLACEHOLDER_FLAGS_WIDTH_PRECISION_LENGTH = (
     r"([-+0#])?(\d+|\*)?(\.(\d+|\*))?(hh?|ll?|L|z|j|t|q)?"

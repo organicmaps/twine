@@ -3,8 +3,9 @@ Apple .strings formatter for iOS/macOS localization.
 """
 
 import re
-from typing import Optional, TextIO
+from typing import TextIO
 
+from twine import TwineError
 from twine.formatters import AbstractFormatter
 from twine.placeholders import convert_placeholders_from_android_to_twine
 
@@ -25,13 +26,13 @@ class AppleFormatter(AbstractFormatter):
         try:
             entries = os.listdir(path)
             return any(item.endswith(".lproj") for item in entries)
-        except (OSError, IOError):
+        except OSError:
             return False
 
     def default_file_name(self) -> str:
         return "Localizable.strings"
 
-    def determine_language_given_path(self, path: str) -> Optional[str]:
+    def determine_language_given_path(self, path: str) -> str | None:
         """Extract language from Apple .lproj path."""
         from pathlib import Path
 
@@ -115,9 +116,9 @@ class AppleFormatter(AbstractFormatter):
         elif definition.reference is not None:
             return definition.reference.translations[default_lang] == value
         else:
-            raise Exception(f"Default language '{default_lang}' is not available for key [{key}]")
+            raise TwineError(f"Default language '{default_lang}' is not available for key [{key}]")
 
-    def format_file(self, lang: str) -> Optional[str]:
+    def format_file(self, lang: str) -> str | None:
         """Format file with trailing newline."""
         result = super().format_file(lang)
         if result:
@@ -131,7 +132,7 @@ class AppleFormatter(AbstractFormatter):
     def key_value_pattern(self) -> str:
         return '"%(key)s" = "%(value)s";'
 
-    def format_comment(self, definition, lang: str) -> Optional[str]:
+    def format_comment(self, definition, lang: str) -> str | None:
         """Format comment, escaping */ sequences."""
         if definition.comment:
             # Escape */ to avoid breaking comment

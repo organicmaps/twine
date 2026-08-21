@@ -10,7 +10,7 @@ mapping Twine's CLDR-named plural categories to Qt's positional
 
 import html
 import re
-from typing import Dict, List, Optional, TextIO
+from typing import TextIO
 from xml.etree import ElementTree as ET
 
 from twine import TwineError
@@ -18,7 +18,6 @@ from twine.formatters import AbstractFormatter
 from twine.formatters.qt_plural_rules import get_qt_numerus_forms
 from twine.placeholders import PLACEHOLDER_REGEX
 from twine.twine_file import TwineDefinition
-
 
 # A "count-eligible" placeholder consumes a numeric argument: %d, %i, %u,
 # %f, %1$d, %02d, etc. Qt's runtime substitutes the count argument from
@@ -80,7 +79,7 @@ class QtFormatter(AbstractFormatter):
     def format_header(self, lang: str) -> str:
         return f'<?xml version="1.0" encoding="utf-8"?>\n<TS version="2.1" language="{self._escape(lang)}">'
 
-    def format_file(self, lang: str) -> Optional[str]:
+    def format_file(self, lang: str) -> str | None:
         result = super().format_file(lang)
         if result:
             result += "\n</TS>\n"
@@ -100,7 +99,7 @@ class QtFormatter(AbstractFormatter):
             return ""
         return "<context>\n<name></name>\n" + "\n".join(bodies) + "\n</context>"
 
-    def format_section(self, section, lang: str) -> Optional[str]:
+    def format_section(self, section, lang: str) -> str | None:
         definitions = [d for d in section.definitions if self.should_include_definition(d, lang)]
         if not definitions:
             return None
@@ -112,7 +111,7 @@ class QtFormatter(AbstractFormatter):
     def key_value_pattern(self) -> str:
         return '<message id="%(key)s">%(comment)s\n<source>%(source)s</source>\n<translation>%(value)s</translation>\n</message>'
 
-    def format_key_value(self, definition: TwineDefinition, lang: str) -> Optional[str]:
+    def format_key_value(self, definition: TwineDefinition, lang: str) -> str | None:
         value = definition.translation_for_lang(lang)
         if value is None:
             return None
@@ -144,7 +143,7 @@ class QtFormatter(AbstractFormatter):
 
     # ---- plural ------------------------------------------------------------
 
-    def format_plural(self, definition: TwineDefinition, lang: str) -> Optional[str]:
+    def format_plural(self, definition: TwineDefinition, lang: str) -> str | None:
         forms = get_qt_numerus_forms(lang)
         if forms is None:
             raise TwineError(
@@ -160,7 +159,7 @@ class QtFormatter(AbstractFormatter):
         translated = original.plural_translation_for_lang(lang) or {}
         fallback = self._developer_plural_forms(original)
 
-        numerusforms: List[str] = []
+        numerusforms: list[str] = []
         for category in forms:
             raw = self._pick_plural_value(definition.key, lang, category, translated, fallback)
             converted = self._convert_plural_value(raw)
@@ -177,20 +176,20 @@ class QtFormatter(AbstractFormatter):
             '</message>'
         )
 
-    def format_plural_keys(self, key: str, plural_hash: Dict[str, str]) -> str:
+    def format_plural_keys(self, key: str, plural_hash: dict[str, str]) -> str:
         # Not used — format_plural() is overridden directly to access the
         # full definition (needed for the developer-language fallback).
         raise NotImplementedError
 
-    def _developer_plural_forms(self, definition: TwineDefinition) -> Dict[str, str]:
+    def _developer_plural_forms(self, definition: TwineDefinition) -> dict[str, str]:
         default_lang = self.twine_file.get_developer_language_code()
         if not default_lang:
             return {}
         return definition.plural_translation_for_lang(default_lang) or {}
 
     def _pick_plural_value(self, key: str, lang: str, category: str,
-                            translated: Dict[str, str],
-                            fallback: Dict[str, str]) -> str:
+                            translated: dict[str, str],
+                            fallback: dict[str, str]) -> str:
         """Per-form fallback chain:
           1. translated[category]
           2. translated['other']

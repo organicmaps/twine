@@ -6,10 +6,9 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
-from twine.twine_file import TwineFile, TwineSection, TwineDefinition
-from twine.runner import Runner
 from twine import TwineError
+from twine.runner import Runner
+from twine.twine_file import TwineDefinition, TwineFile, TwineSection
 
 
 class TestValidateTwineFile:

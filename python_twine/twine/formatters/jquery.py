@@ -4,7 +4,7 @@ jQuery-localize JSON formatter.
 
 import json
 import re
-from typing import Any, Optional, TextIO
+from typing import Any, TextIO
 
 from twine.formatters import AbstractFormatter
 
@@ -25,7 +25,7 @@ class JQueryFormatter(AbstractFormatter):
         """Return the output path component for a language."""
         return f"{lang}.json"
 
-    def determine_language_given_path(self, path: str) -> Optional[str]:
+    def determine_language_given_path(self, path: str) -> str | None:
         """Extract language from filename like strings-en-US.json."""
         from pathlib import Path
 
@@ -58,7 +58,7 @@ class JQueryFormatter(AbstractFormatter):
             for key, value in data.items():
                 self.set_translation_for_key_recursive(key, lang, value)
 
-    def format_file(self, lang: str) -> Optional[str]:
+    def format_file(self, lang: str) -> str | None:
         """Format file with JSON wrapper."""
         result = super().format_file(lang)
         if result:
@@ -76,11 +76,11 @@ class JQueryFormatter(AbstractFormatter):
 
         return ",\n\n".join(sections)
 
-    def format_section_header(self, section) -> Optional[str]:
+    def format_section_header(self, section) -> str | None:
         """No section headers in JSON."""
         return None
 
-    def format_section(self, section, lang: str) -> Optional[str]:
+    def format_section(self, section, lang: str) -> str | None:
         """Format section without headers."""
         definitions = [
             d for d in section.definitions if self.should_include_definition(d, lang)

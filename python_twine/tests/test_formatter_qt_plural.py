@@ -8,14 +8,13 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from twine import TwineError
 from twine.formatters.qt import QtFormatter
 from twine.formatters.qt_plural_rules import (
     QT_NUMERUS_FORMS,
     get_qt_numerus_forms,
 )
-from twine.twine_file import TwineFile, TwineSection, TwineDefinition
+from twine.twine_file import TwineDefinition, TwineFile, TwineSection
 
 
 @pytest.fixture
@@ -312,7 +311,7 @@ class TestLreleaseCompilation:
             ts_path.write_text(ts_content, encoding="utf-8")
             result = subprocess.run(
                 ["lrelease", str(ts_path), "-qm", str(qm_path)],
-                capture_output=True, text=True,
+                capture_output=True, text=True, check=False,
             )
             combined = (result.stderr + result.stdout).lower()
             return result.returncode, combined

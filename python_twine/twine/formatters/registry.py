@@ -2,7 +2,7 @@
 Formatter registry and management.
 """
 
-from typing import Dict, List, Optional
+
 from twine.formatters import AbstractFormatter
 
 
@@ -10,28 +10,28 @@ class FormatterRegistry:
     """Registry for managing formatter instances."""
 
     def __init__(self):
-        self._formatters: Dict[str, AbstractFormatter] = {}
+        self._formatters: dict[str, AbstractFormatter] = {}
 
     def register(self, formatter: AbstractFormatter):
         """Register a formatter instance."""
         self._formatters[formatter.format_name()] = formatter
 
-    def get(self, format_name: str) -> Optional[AbstractFormatter]:
+    def get(self, format_name: str) -> AbstractFormatter | None:
         """Get a formatter by name."""
         return self._formatters.get(format_name)
 
-    def all(self) -> List[AbstractFormatter]:
+    def all(self) -> list[AbstractFormatter]:
         """Get all registered formatters."""
         return list(self._formatters.values())
 
-    def find_by_extension(self, extension: str) -> Optional[AbstractFormatter]:
+    def find_by_extension(self, extension: str) -> AbstractFormatter | None:
         """Find a formatter by file extension."""
         for formatter in self._formatters.values():
             if formatter.extension() == extension:
                 return formatter
         return None
 
-    def find_by_path(self, path: str) -> Optional[AbstractFormatter]:
+    def find_by_path(self, path: str) -> AbstractFormatter | None:
         """Find a formatter that can handle the given path."""
         import os
         from pathlib import Path

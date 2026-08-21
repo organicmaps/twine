@@ -3,7 +3,6 @@ Output processor for filtering and processing Twine files.
 """
 
 import re
-from typing import Optional, List, Dict
 
 from twine.twine_file import TwineFile, TwineSection
 
@@ -11,11 +10,11 @@ from twine.twine_file import TwineFile, TwineSection
 class OutputProcessor:
     """Processes TwineFile for output, handling filtering and fallbacks."""
 
-    def __init__(self, twine_file: TwineFile, options: Dict):
+    def __init__(self, twine_file: TwineFile, options: dict):
         self.twine_file = twine_file
         self.options = options
 
-    def default_language(self) -> Optional[str]:
+    def default_language(self) -> str | None:
         """Get the default/developer language."""
         dev_lang = self.options.get("developer_language")
         if dev_lang:
@@ -24,7 +23,7 @@ class OutputProcessor:
             return self.twine_file.language_codes[0]
         return None
 
-    def fallback_languages(self, language: str) -> List[str]:
+    def fallback_languages(self, language: str) -> list[str]:
         """
         Get fallback languages for a given language.
 

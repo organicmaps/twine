@@ -6,14 +6,14 @@ import io
 from pathlib import Path
 
 import pytest
-
-from twine.formatters.django import DjangoFormatter
-from twine.formatters.flash import FlashFormatter
-from twine.twine_file import TwineFile, TwineSection, TwineDefinition
 from twine.formatters.android import AndroidFormatter
 from twine.formatters.apple import AppleFormatter
+from twine.formatters.django import DjangoFormatter
+from twine.formatters.flash import FlashFormatter
 from twine.formatters.gettext import GettextFormatter
 from twine.formatters.jquery import JQueryFormatter
+from twine.twine_file import TwineDefinition, TwineFile, TwineSection
+
 
 class FormatterTestData:
     def check_test_keys(self, twine_file: TwineFile):
