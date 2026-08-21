@@ -115,7 +115,7 @@ module Twine
           output_path = File.join(@options[:output_path], item)
           next unless File.directory?(output_path)
 
-          lang = formatter.determine_language_given_path(output_path)
+          lang = formatter.language_for_folder_name(item)
           next unless lang
 
           language_found = true

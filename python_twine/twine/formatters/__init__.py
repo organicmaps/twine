@@ -230,6 +230,16 @@ class AbstractFormatter(ABC):
 
         return None
 
+    def language_for_folder_name(self, name: str) -> str | None:
+        """Language of a localization folder, or None if it is not one.
+
+        Only the folder's own name is considered. determine_language_given_path()
+        classifies a whole path and scans every segment, which is right for a file
+        the user named but wrong here: an unrelated ancestor such as /tmp or /opt
+        matches the language regex and turns every folder into a language.
+        """
+        return self.determine_language_given_path(name)
+
     def output_path_for_language(self, lang: str) -> str:
         """Return the output path component for a language."""
         return lang

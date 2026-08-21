@@ -87,6 +87,15 @@ module Twine
         path.split(File::SEPARATOR).reverse.find { |segment| segment =~ only_language_and_region }
       end
 
+      # Language of a localization folder, or nil if it is not one.
+      # Only the folder's own name is considered. determine_language_given_path
+      # classifies a whole path and scans every segment, which is right for a file
+      # the user named but wrong here: an unrelated ancestor such as /tmp or /opt
+      # matches the language regex and turns every folder into a language.
+      def language_for_folder_name(name)
+        determine_language_given_path(name)
+      end
+
       def output_path_for_language(lang)
         lang
       end

@@ -99,6 +99,12 @@ class AndroidFormatter(AbstractFormatter):
 
         return super().determine_language_given_path(path)
 
+    def language_for_folder_name(self, name: str) -> str | None:
+        """Language of a values[-lang] folder, or None if it is not one."""
+        if name != "values" and not name.startswith("values-"):
+            return None
+        return self.determine_language_given_path(name)
+
     def output_path_for_language(self, lang: str) -> str:
         """Get Android values folder name for language."""
         if self.twine_file.language_codes and lang == self.twine_file.language_codes[0]:
