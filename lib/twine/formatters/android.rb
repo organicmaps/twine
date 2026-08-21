@@ -54,6 +54,11 @@ module Twine
         return super
       end
 
+      def language_for_folder_name(name)
+        return nil unless name == 'values' || name.start_with?('values-')
+        determine_language_given_path(name)
+      end
+
       def output_path_for_language(lang)
         if lang == @twine_file.language_codes[0]
           "values"

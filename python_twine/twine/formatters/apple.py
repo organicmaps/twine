@@ -49,6 +49,12 @@ class AppleFormatter(AbstractFormatter):
 
         return super().determine_language_given_path(path)
 
+    def language_for_folder_name(self, name: str) -> str | None:
+        """Language of an <lang>.lproj folder, or None if it is not one."""
+        if not name.endswith(".lproj"):
+            return None
+        return self.determine_language_given_path(name)
+
     def output_path_for_language(self, lang: str) -> str:
         """Get .lproj folder name for language."""
         return f"{lang}.lproj"

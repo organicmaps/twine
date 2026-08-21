@@ -153,7 +153,7 @@ class Runner:
                 if not item.is_dir():
                     continue
 
-                lang = formatter.determine_language_given_path(str(item))
+                lang = formatter.language_for_folder_name(item.name)
                 if not lang:
                     continue
 
@@ -266,7 +266,7 @@ class Runner:
             if not item.is_dir():
                 continue
 
-            lang = formatter.determine_language_given_path(str(item))
+            lang = formatter.language_for_folder_name(item.name)
             if not lang:
                 continue
 

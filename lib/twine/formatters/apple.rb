@@ -35,6 +35,11 @@ module Twine
         return super
       end
 
+      def language_for_folder_name(name)
+        return nil unless name.end_with?('.lproj')
+        determine_language_given_path(name)
+      end
+
       def output_path_for_language(lang)
         "#{lang}.lproj"
       end
