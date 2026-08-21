@@ -33,7 +33,7 @@ def find_keys_in_file(filepath:str, search_regex:re.Pattern)->list[str]:
     """
     try:
         keys = []
-        with open(filepath) as f:
+        with open(filepath, encoding="utf-8") as f:
             for line in f:
                 m = search_regex.search(line)
                 if m is not None:

@@ -3,7 +3,6 @@ Encoding utilities for detecting file encodings.
 """
 
 
-
 def get_bom(path: str) -> str | None:
     """
     Detect BOM (Byte Order Mark) in a file.

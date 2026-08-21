@@ -4,7 +4,7 @@ Core data models for Twine.
 
 import copy
 import re
-from typing import Any, ClassVar
+from typing import Any
 
 FALLBACK_LANGS_MAPPING = {
     "zh-CN": "zh-Hans",  # Chinese Simplified
@@ -18,7 +18,7 @@ REGIONAL_LANG_REGEX = re.compile(r"([a-zA-Z]{2})-[a-zA-Z]+")
 class TwineDefinition:
     """Represents a single translatable string definition."""
 
-    PLURAL_KEYS: ClassVar[list[str]] = ["zero", "one", "two", "few", "many", "other"]
+    PLURAL_KEYS = ("zero", "one", "two", "few", "many", "other")
 
     def __init__(self, key: str):
         self.key = key

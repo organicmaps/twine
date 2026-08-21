@@ -3,6 +3,7 @@ Tests for placeholder conversion utilities.
 """
 
 import pytest
+
 from twine.placeholders import (
     contains_python_specific_placeholder,
     convert_placeholders_from_android_to_twine,

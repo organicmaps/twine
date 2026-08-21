@@ -5,6 +5,7 @@ Tests for the Qt ID-based TS formatter (non-plural messages).
 import io
 
 import pytest
+
 from twine import TwineError
 from twine.formatters.qt import QtFormatter
 from twine.twine_file import TwineDefinition, TwineFile, TwineSection

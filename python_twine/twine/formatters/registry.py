@@ -2,7 +2,6 @@
 Formatter registry and management.
 """
 
-
 from twine.formatters import AbstractFormatter
 
 

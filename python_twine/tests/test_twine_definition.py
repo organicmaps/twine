@@ -3,6 +3,7 @@ Tests for TwineDefinition class.
 """
 
 import pytest
+
 from twine.twine_file import TwineDefinition
 
 
@@ -98,30 +99,30 @@ class TestReferences:
         definition.reference_key = reference.key
         definition.reference = reference
 
-        return definition, reference
+        return definition
 
     def test_reference_comment_used(self, setup_references):
         """Test that reference comment is used when definition has none."""
-        definition, _reference = setup_references
+        definition = setup_references
 
         assert definition.comment == "reference comment"
 
     def test_reference_comment_override(self, setup_references):
         """Test that definition comment overrides reference."""
-        definition, _reference = setup_references
+        definition = setup_references
         definition.comment = "definition comment"
 
         assert definition.comment == "definition comment"
 
     def test_reference_tags_used(self, setup_references):
         """Test that reference tags are used when definition has none."""
-        definition, _reference = setup_references
+        definition = setup_references
 
         assert definition.matches_tags([["ref1"]], include_untagged=False)
 
     def test_reference_tags_override(self, setup_references):
         """Test that definition tags override reference."""
-        definition, _reference = setup_references
+        definition = setup_references
         definition.tags = ["tag1"]
 
         assert not definition.matches_tags([["ref1"]], include_untagged=False)
@@ -129,13 +130,13 @@ class TestReferences:
 
     def test_reference_translation_used(self, setup_references):
         """Test that reference translation is used when definition has none."""
-        definition, _reference = setup_references
+        definition = setup_references
 
         assert definition.translation_for_lang("en") == "ref-value"
 
     def test_reference_translation_override(self, setup_references):
         """Test that definition translation overrides reference."""
-        definition, _reference = setup_references
+        definition = setup_references
         definition.translations["en"] = "value"
 
         assert definition.translation_for_lang("en") == "value"

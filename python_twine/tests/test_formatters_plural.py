@@ -5,6 +5,7 @@ Tests for formatter classes.
 from pathlib import Path
 
 import pytest
+
 from twine.formatters.android import AndroidFormatter
 from twine.formatters.apple_plural import ApplePluralFormatter
 from twine.twine_file import TwineDefinition, TwineFile, TwineSection
