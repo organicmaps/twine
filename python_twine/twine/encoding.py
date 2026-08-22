@@ -2,10 +2,8 @@
 Encoding utilities for detecting file encodings.
 """
 
-from typing import Optional
 
-
-def get_bom(path: str) -> Optional[str]:
+def get_bom(path: str) -> str | None:
     """
     Detect BOM (Byte Order Mark) in a file.
 
@@ -29,7 +27,7 @@ def get_bom(path: str) -> Optional[str]:
             return "UTF-16LE"
 
         return None
-    except (IOError, OSError):
+    except OSError:
         return None
 
 

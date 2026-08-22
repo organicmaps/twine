@@ -5,13 +5,12 @@ Abstract base formatter for all localization format implementations.
 import os
 import re
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, TextIO, List
 from pathlib import Path
+from typing import TextIO
 
 import twine
-from twine.twine_file import TwineFile, TwineDefinition, TwineSection
 from twine.output_processor import OutputProcessor
-
+from twine.twine_file import TwineDefinition, TwineFile, TwineSection
 
 LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE = r"[a-z]{2,3}(?:-[A-Za-z]{2,4})?"
 
@@ -20,7 +19,7 @@ ONLY_LANGUAGE_AND_REGION_REGEX = re.compile(
 )
 
 
-def flatten(input: Optional[List[List[str]]]) -> List[str]:
+def flatten(input: list[list[str]] | None) -> list[str]:
     if input is None:
         return []
     flat = []
@@ -45,8 +44,8 @@ class AbstractFormatter(ABC):
 
     def __init__(self):
         self.twine_file = TwineFile()
-        self.options: Dict = {}
-        self.validation_errors: List[str] = []
+        self.options: dict = {}
+        self.validation_errors: list[str] = []
 
     @abstractmethod
     def format_name(self) -> str:
@@ -68,7 +67,7 @@ class AbstractFormatter(ABC):
             entries = os.listdir(path)
             ext = self.extension()
             return any(item.endswith(ext) for item in entries)
-        except (OSError, IOError):
+        except OSError:
             return False
 
     @abstractmethod
@@ -78,7 +77,7 @@ class AbstractFormatter(ABC):
             "You must implement default_file_name in your formatter class."
         )
 
-    def set_translation_for_key(self, key: str, lang: str, value: str, section_name:Optional[str]):
+    def set_translation_for_key(self, key: str, lang: str, value: str, section_name:str | None):
         """Set a translation value for a key in a specific language."""
         # Normalize newlines
         value = value.replace("\n", "\\n")
@@ -122,7 +121,7 @@ class AbstractFormatter(ABC):
         if lang not in self.twine_file.language_codes:
             self.twine_file.add_language_code(lang)
 
-    def set_translation_for_key_plural(self, key: str, lang: str, values: Dict[str, str], section_name:Optional[str]):
+    def set_translation_for_key_plural(self, key: str, lang: str, values: dict[str, str], section_name:str | None):
         """ Set plular values translation for a key in a specific language.
             This method is similar to set_translation_for_key() but with dict values.
         """
@@ -172,7 +171,7 @@ class AbstractFormatter(ABC):
         if lang not in self.twine_file.language_codes:
             self.twine_file.add_language_code(lang)
 
-    def get_section(self, section_name) -> Optional[TwineSection]:
+    def get_section(self, section_name) -> TwineSection | None:
         # Find or create a section by name
         return next(
             (s for s in self.twine_file.sections if s.name == section_name), None
@@ -209,7 +208,7 @@ class AbstractFormatter(ABC):
                     self.add_validation_error(msg)
                 definition.comment = comment
 
-    def determine_language_given_path(self, path: str) -> Optional[str]:
+    def determine_language_given_path(self, path: str) -> str | None:
         """Determine the language code from a file path."""
 
         path_obj = Path(path)
@@ -246,7 +245,7 @@ class AbstractFormatter(ABC):
     def reset_validation_errors(self):
         self.validation_errors = []
 
-    def format_file(self, lang: str) -> Optional[str]:
+    def format_file(self, lang: str) -> str | None:
         """Format the complete file for a language."""
         output_processor = OutputProcessor(self.twine_file, self.options)
         processed_twine_file = output_processor.process(lang)
@@ -262,7 +261,7 @@ class AbstractFormatter(ABC):
         result += self.format_sections(processed_twine_file, lang)
         return result
 
-    def format_header(self, lang: str) -> Optional[str]:
+    def format_header(self, lang: str) -> str | None:
         """Format the file header. Override in subclasses."""
         return None
 
@@ -274,7 +273,7 @@ class AbstractFormatter(ABC):
         sections = [s for s in sections if s]  # Remove None values
         return "\n".join(sections)
 
-    def format_section_header(self, section: TwineSection) -> Optional[str]:
+    def format_section_header(self, section: TwineSection) -> str | None:
         """Format a section header. Override in subclasses."""
         return None
 
@@ -282,7 +281,7 @@ class AbstractFormatter(ABC):
         """Check if a definition should be included for a language."""
         return definition.translation_for_lang(lang) is not None
 
-    def format_section(self, section: TwineSection, lang: str) -> Optional[str]:
+    def format_section(self, section: TwineSection, lang: str) -> str | None:
         """Format a single section."""
         definitions = [
             d for d in section.definitions if self.should_include_definition(d, lang)
@@ -309,7 +308,7 @@ class AbstractFormatter(ABC):
 
     def format_definition(
         self, definition: TwineDefinition, lang: str
-    ) -> Optional[str]:
+    ) -> str | None:
         """Format a single definition."""
         parts = []
 
@@ -330,11 +329,11 @@ class AbstractFormatter(ABC):
 
         return "".join(parts) if parts else None
 
-    def format_comment(self, definition: TwineDefinition, lang: str) -> Optional[str]:
+    def format_comment(self, definition: TwineDefinition, lang: str) -> str | None:
         """Format a comment. Override in subclasses."""
         return None
 
-    def format_key_value(self, definition: TwineDefinition, lang: str) -> Optional[str]:
+    def format_key_value(self, definition: TwineDefinition, lang: str) -> str | None:
         """Format a key-value pair."""
         value = definition.translation_for_lang(lang)
         if value is None:
@@ -346,7 +345,7 @@ class AbstractFormatter(ABC):
             "value": self.format_value(value),
         }
 
-    def format_plural(self, definition: TwineDefinition, lang: str) -> Optional[str]:
+    def format_plural(self, definition: TwineDefinition, lang: str) -> str | None:
         """Format plural translations."""
         plural_hash = definition.plural_translation_for_lang(lang)
         if plural_hash:
@@ -359,7 +358,7 @@ class AbstractFormatter(ABC):
             "You must implement key_value_pattern in your formatter class."
         )
 
-    def format_plural_keys(self, key: str, plural_hash: Dict[str, str]) -> str:
+    def format_plural_keys(self, key: str, plural_hash: dict[str, str]) -> str:
         """Format plural keys. Must be overridden if SUPPORTS_PLURAL is True."""
         raise NotImplementedError(
             "You must implement format_plural_keys in your formatter class."

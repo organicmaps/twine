@@ -2,9 +2,9 @@
 Android XML strings formatter.
 """
 
-import re
 import html
-from typing import Dict, Optional, TextIO
+import re
+from typing import ClassVar, TextIO
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
 
@@ -38,7 +38,7 @@ class AndroidFormatter(AbstractFormatter):
     SUPPORTS_PLURAL = True
 
     # Language code mappings for Android
-    ANDROID_TO_TWINE_LANG_CODES = {
+    ANDROID_TO_TWINE_LANG_CODES: ClassVar[dict[str, str]] = {
         "zh": "zh-Hans",
         "zh-TW": "zh-Hant",
         "zh-CN": "zh-Hans",
@@ -49,7 +49,7 @@ class AndroidFormatter(AbstractFormatter):
         "ji": "yi",
     }
 
-    TWINE_TO_ANDROID_LANG_CODES = {
+    TWINE_TO_ANDROID_LANG_CODES: ClassVar[dict[str, str]] = {
         "zh-Hans": "zh",
         "zh-Hant": "zh-TW",
         "he": "iw",
@@ -70,13 +70,13 @@ class AndroidFormatter(AbstractFormatter):
         try:
             entries = os.listdir(path)
             return any(item.startswith("values") for item in entries)
-        except (OSError, IOError):
+        except OSError:
             return False
 
     def default_file_name(self) -> str:
         return "strings.xml"
 
-    def determine_language_given_path(self, path: str) -> Optional[str]:
+    def determine_language_given_path(self, path: str) -> str | None:
         """Extract language from Android path like values-es-rMX."""
         from pathlib import Path
 
@@ -191,7 +191,7 @@ class AndroidFormatter(AbstractFormatter):
     def format_section_header(self, section) -> str:
         return f"    <!-- SECTION: {section.name} -->"
 
-    def format_comment(self, definition, lang: str) -> Optional[str]:
+    def format_comment(self, definition, lang: str) -> str | None:
         if definition.comment:
             # Replace -- with em dash to avoid XML comment issues
             comment = definition.comment.replace("--", "—")
@@ -201,7 +201,7 @@ class AndroidFormatter(AbstractFormatter):
     def key_value_pattern(self) -> str:
         return '    <string name="%(key)s">%(value)s</string>'
 
-    def format_plural_keys(self, key: str, plural_hash: Dict[str, str]) -> str:
+    def format_plural_keys(self, key: str, plural_hash: dict[str, str]) -> str:
         """Format Android plurals."""
         result = f'    <plurals name="{key}">\n'
 

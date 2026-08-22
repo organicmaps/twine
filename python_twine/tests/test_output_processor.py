@@ -4,8 +4,8 @@ Tests for OutputProcessor class.
 
 import pytest
 
-from twine.twine_file import TwineFile, TwineSection, TwineDefinition
 from twine.output_processor import OutputProcessor
+from twine.twine_file import TwineDefinition, TwineFile, TwineSection
 
 
 class TestOutputProcessor:

@@ -3,7 +3,7 @@ Django .po formatter.
 """
 
 import re
-from typing import Optional, TextIO
+from typing import TextIO
 
 from twine.formatters import AbstractFormatter
 
@@ -74,7 +74,7 @@ class DjangoFormatter(AbstractFormatter):
                 value = None
                 comment = None
 
-    def format_file(self, lang: str) -> Optional[str]:
+    def format_file(self, lang: str) -> str | None:
         """Format file, tracking default language."""
         if self.twine_file.language_codes:
             self.default_lang = self.twine_file.language_codes[0]
@@ -96,7 +96,7 @@ msgstr ""
         """Format section header as Django-style comment."""
         return f"# --------- {section.name} --------- #\n"
 
-    def format_definition(self, definition, lang: str) -> Optional[str]:
+    def format_definition(self, definition, lang: str) -> str | None:
         """Format definition with base translation comment."""
         parts = []
 
@@ -117,7 +117,7 @@ msgstr ""
 
         return "".join(parts) if parts else None
 
-    def format_base_translation(self, definition) -> Optional[str]:
+    def format_base_translation(self, definition) -> str | None:
         """Format base translation as comment."""
         if self.default_lang:
             base_translation = definition.translations.get(self.default_lang)
@@ -129,7 +129,7 @@ msgstr ""
         """Return key-value pattern for Django."""
         return 'msgid "%(key)s"\nmsgstr "%(value)s"\n'
 
-    def format_comment(self, definition, lang: str) -> Optional[str]:
+    def format_comment(self, definition, lang: str) -> str | None:
         """Format comment."""
         if definition.comment:
             escaped = self.escape_quotes(definition.comment)

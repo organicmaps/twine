@@ -14,4 +14,3 @@ stderr = sys.stderr
 class TwineError(Exception):
     """Base exception for Twine errors."""
 
-    pass

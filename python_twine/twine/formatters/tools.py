@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 
 def replace_with_filter(txt:str, old:str, new:str, do_replace:Callable[[int], bool]):

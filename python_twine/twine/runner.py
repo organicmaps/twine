@@ -3,8 +3,9 @@ Runner orchestrates command execution for Twine.
 """
 
 import re
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Optional, Dict, Any, Iterable, Tuple, Set
+from typing import Any
 
 import twine
 from twine import TwineError
@@ -38,8 +39,8 @@ class Runner:
 
     def __init__(
         self,
-        options: Optional[Dict[str, Any]] = None,
-        twine_file: Optional[TwineFile] = None,
+        options: dict[str, Any] | None = None,
+        twine_file: TwineFile | None = None,
     ):
         self.options = options or {}
         self.twine_file = twine_file or TwineFile()
@@ -257,7 +258,7 @@ class Runner:
         self.twine_file.optimize_duplicates()
         self.write_twine_data(self.options["twine_file"])
 
-    def find_translation_files(self, input_path: Path, formatter: AbstractFormatter) -> Iterable[Tuple[str, Path]]:
+    def find_translation_files(self, input_path: Path, formatter: AbstractFormatter) -> Iterable[tuple[str, Path]]:
         """ Iterate over files in `input_path` to find consumable by the formatter. """
         file_name = self.options.get("file_name") or formatter.default_file_name()
 
@@ -277,6 +278,7 @@ class Runner:
     def validate_twine_file(self):
         """Validate the Twine data file."""
         import re
+
         from twine.placeholders import contains_python_specific_placeholder
 
         total_definitions = 0
@@ -351,7 +353,7 @@ class Runner:
     def validate_unused_strings(self):
         if self.options['android_src_root'] is None and self.options['ios_src_root'] is None \
             and self.options['core_src_root'] is None:
-            raise Exception("Please specify source path with --android-src-root or --ios-src-root or --core-src-root")
+            raise TwineError("Please specify source path with --android-src-root or --ios-src-root or --core-src-root")
 
         core_keys = self._grep_core_strings()
         ios_keys = self._grep_ios_strings()
@@ -372,18 +374,18 @@ class Runner:
         if len(unused):
             print(f"Found {len(unused)} definitions/keys which are no longer used in the codebase:")
             print(*sorted(unused), sep="\n")
-            raise Exception("Unused definitions found")
+            raise TwineError("Unused definitions found")
         else:
             print("All good. There are no unused translation definitions/keys.")
         return len(unused)
 
-    def _grep_core_strings(self) -> Set[str]:
+    def _grep_core_strings(self) -> set[str]:
         # Search for localized strings in C++ source code.
         if self.options['core_src_root'] is None:
             return set()
         return grep_folder(self.options['core_src_root'], ["*.h", "*.hpp", "*.cpp"], CORE_RE)
 
-    def _grep_ios_strings(self) -> Set[str]:
+    def _grep_ios_strings(self) -> set[str]:
         # Search for localized strings in iOS source code.
         if self.options['ios_src_root'] is None:
             return set()
@@ -392,7 +394,7 @@ class Runner:
                grep_folder(root_path, ["*.m", "*.mm", "*.swift", "*.h"], IOS_NS_RE) | \
                grep_folder(root_path, ["*.xib"], IOS_XML_RE)
 
-    def _grep_android_strings(self) -> Set[str]:
+    def _grep_android_strings(self) -> set[str]:
         # Search for localized strings in Android source code and resources.
         if self.options['android_src_root'] is None:
             return set()
@@ -436,7 +438,7 @@ class Runner:
             "Could not determine format. Please specify with --format option."
         )
 
-    def _prepare_read_write(self, path: str, lang: Optional[str]):
+    def _prepare_read_write(self, path: str, lang: str | None):
         """Prepare formatter and language for read/write operations."""
 
         # Get formatter

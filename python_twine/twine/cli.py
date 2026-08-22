@@ -5,8 +5,6 @@ Command-line interface for Twine.
 import argparse
 import sys
 
-from typing import Optional, Dict, List
-
 from twine import __version__
 from twine.runner import Runner
 
@@ -196,7 +194,7 @@ class CLI:
         )
 
     @staticmethod
-    def parse(args: Optional[List[str]] = None) -> Optional[Dict]:
+    def parse(args: list[str] | None = None) -> dict | None:
         """Parse command-line arguments."""
         parser = CLI.create_parser()
 
@@ -219,7 +217,7 @@ class CLI:
         # Parse tags into groups. Tags within a group have "OR" meaning. Groups are joined with "AND".
         # For example `--tags android,apple --tags maps` means filter by "(android OR apple) AND (maps)"
         # Or another `--tags android-sdk --tags ~android-app` means filter by "(android-sdk) AND (not android-app)"
-        if "tags" in options and options["tags"]:
+        if options.get("tags"):
             # Convert list of tag strings to list of lists
             tag_groups = []
             for tag_group in options["tags"]:
@@ -239,7 +237,7 @@ def main():
         runner = Runner(options)
         try:
             runner.run()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - top level, report anything and exit 1
             import traceback
             print(f"Error: {e}", file=sys.stderr)
             traceback.print_exception(e)

@@ -3,14 +3,15 @@ Tests for placeholder conversion utilities.
 """
 
 import pytest
+
 from twine.placeholders import (
-    number_of_twine_placeholders,
-    convert_twine_string_placeholder,
-    convert_placeholders_from_twine_to_android,
-    convert_placeholders_from_android_to_twine,
-    convert_placeholders_from_twine_to_flash,
-    convert_placeholders_from_flash_to_twine,
     contains_python_specific_placeholder,
+    convert_placeholders_from_android_to_twine,
+    convert_placeholders_from_flash_to_twine,
+    convert_placeholders_from_twine_to_android,
+    convert_placeholders_from_twine_to_flash,
+    convert_twine_string_placeholder,
+    number_of_twine_placeholders,
 )
 
 

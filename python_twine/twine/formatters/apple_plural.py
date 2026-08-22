@@ -2,7 +2,7 @@
 Apple .stringsdict formatter for plural localization.
 """
 
-from typing import Dict, Optional, TextIO
+from typing import TextIO
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
 
@@ -36,7 +36,7 @@ class ApplePluralFormatter(AppleFormatter):
         """Generate plist XML footer."""
         return "</dict>\n</plist>"
 
-    def format_file(self, lang: str) -> Optional[str]:
+    def format_file(self, lang: str) -> str | None:
         """Format file with plist footer."""
         result = super().format_file(lang)
         if result:
@@ -47,7 +47,7 @@ class ApplePluralFormatter(AppleFormatter):
         """Format section header as XML comment."""
         return f"<!-- ********** {section.name} **********/ -->\n"
 
-    def format_comment(self, definition, lang: str) -> Optional[str]:
+    def format_comment(self, definition, lang: str) -> str | None:
         """Format comment as XML comment."""
         if definition.comment:
             # Replace -- with em dash for XML compatibility
@@ -55,7 +55,7 @@ class ApplePluralFormatter(AppleFormatter):
             return f"<!-- {comment} -->\n"
         return None
 
-    def format_plural_keys(self, key: str, plural_hash: Dict[str, str]) -> str:
+    def format_plural_keys(self, key: str, plural_hash: dict[str, str]) -> str:
         """Format plural entries in stringsdict format."""
         result = f"""\t<key>{key}</key>
 \t<dict>
@@ -185,10 +185,10 @@ class ApplePluralFormatter(AppleFormatter):
         value_children = list(value_element)
 
         for j, inner_key in enumerate(value_children):
-            if inner_key.tag == "key" and inner_key.text == "value":
-                if j + 1 < len(value_children):
-                    value_dict = value_children[j + 1]
-                    break
+            if (inner_key.tag == "key" and inner_key.text == "value"
+                    and j + 1 < len(value_children)):
+                value_dict = value_children[j + 1]
+                break
 
         if value_dict is not None and value_dict.tag == "dict":
             # Extract plural entries
@@ -201,13 +201,12 @@ class ApplePluralFormatter(AppleFormatter):
                 if pkey_elem.tag == "key":
                     pkey = pkey_elem.text
 
-                    if pkey in TwineDefinition.PLURAL_KEYS:
-                        if j + 1 < len(plural_children):
-                            string_elem = plural_children[j + 1]
+                    if pkey in TwineDefinition.PLURAL_KEYS and j + 1 < len(plural_children):
+                        string_elem = plural_children[j + 1]
 
-                            if string_elem.tag == "string":
-                                pvalue = string_elem.text or ""
-                                plural_dict[pkey] = pvalue
+                        if string_elem.tag == "string":
+                            pvalue = string_elem.text or ""
+                            plural_dict[pkey] = pvalue
 
                 j += 1
         return plural_dict

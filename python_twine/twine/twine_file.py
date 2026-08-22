@@ -2,9 +2,9 @@
 Core data models for Twine.
 """
 
-import re
-from typing import Dict, List, Optional, Any
 import copy
+import re
+from typing import Any
 
 FALLBACK_LANGS_MAPPING = {
     "zh-CN": "zh-Hans",  # Chinese Simplified
@@ -18,19 +18,19 @@ REGIONAL_LANG_REGEX = re.compile(r"([a-zA-Z]{2})-[a-zA-Z]+")
 class TwineDefinition:
     """Represents a single translatable string definition."""
 
-    PLURAL_KEYS = ["zero", "one", "two", "few", "many", "other"]
+    PLURAL_KEYS = ("zero", "one", "two", "few", "many", "other")
 
     def __init__(self, key: str):
         self.key = key
-        self._comment: Optional[str] = None
-        self.tags: Optional[List[str]] = None
-        self.translations: Dict[str, str] = {}
-        self.plural_translations: Dict[str, Dict[str, str]] = {}
-        self.reference: Optional["TwineDefinition"] = None
-        self.reference_key: Optional[str] = None
+        self._comment: str | None = None
+        self.tags: list[str] | None = None
+        self.translations: dict[str, str] = {}
+        self.plural_translations: dict[str, dict[str, str]] = {}
+        self.reference: TwineDefinition | None = None
+        self.reference_key: str | None = None
 
     @property
-    def comment(self) -> Optional[str]:
+    def comment(self) -> str | None:
         """Get comment, falling back to reference if available."""
         if self._comment:
             return self._comment
@@ -39,23 +39,23 @@ class TwineDefinition:
         return None
 
     @comment.setter
-    def comment(self, value: Optional[str]):
+    def comment(self, value: str | None):
         self._comment = value
 
     @property
-    def raw_comment(self) -> Optional[str]:
+    def raw_comment(self) -> str | None:
         """Get the raw comment without reference fallback."""
         return self._comment
 
-    def add_tags(self, tags: List[str]):
+    def add_tags(self, tags: list[str]):
         if self.tags:
             self.tags += tags
         else:
             self.tags = tags
-        self.tags = sorted(list(set(self.tags))) # Remove duplicates and sort
+        self.tags = sorted(set(self.tags)) # Remove duplicates and sort
 
     def matches_tags(
-        self, tags: Optional[List[List[str]]], include_untagged: bool
+        self, tags: list[list[str]] | None, include_untagged: bool
     ) -> bool:
         """
         Check if definition matches the given tag filters.
@@ -96,7 +96,7 @@ class TwineDefinition:
 
         return True
 
-    def translation_for_lang(self, lang: str | List[str]) -> Optional[str]:
+    def translation_for_lang(self, lang: str | list[str]) -> str | None:
         """
         Get translation for a language, checking reference if not found.
 
@@ -123,14 +123,14 @@ class TwineDefinition:
 
         return None
 
-    def find_plural_lang_fallback(self, fallback_langs: List[str]) -> Optional[str]:
+    def find_plural_lang_fallback(self, fallback_langs: list[str]) -> str | None:
         """ Find first language from `fallback_langs` which is in plural_translations. """
         return next(
             filter(lambda lng: lng in self.plural_translations,
                    fallback_langs),
             None)
 
-    def plural_translation_for_lang(self, lang: str) -> Optional[Dict[str, str]]:
+    def plural_translation_for_lang(self, lang: str) -> dict[str, str] | None:
         """
         Get plural translations for a language, sorted by PLURAL_KEYS order.
 
@@ -177,7 +177,7 @@ class TwineSection:
 
     def __init__(self, name: str):
         self.name = name
-        self.definitions: List[TwineDefinition] = []
+        self.definitions: list[TwineDefinition] = []
 
 
 class TwineFile:
@@ -200,9 +200,9 @@ class TwineFile:
                de = NULL
                nl = NULL
         """
-        self.sections: List[TwineSection] = []
-        self.definitions_by_key: Dict[str, TwineDefinition] = {}
-        self.language_codes: List[str] = []
+        self.sections: list[TwineSection] = []
+        self.definitions_by_key: dict[str, TwineDefinition] = {}
+        self.language_codes: list[str] = []
         self.fallback_to_default = fallback_to_default
 
     def add_language_code(self, code: str):
@@ -223,7 +223,7 @@ class TwineFile:
             self.language_codes.remove(code)
         self.language_codes.insert(0, code)
 
-    def get_developer_language_code(self) -> Optional[str]:
+    def get_developer_language_code(self) -> str | None:
         if self.language_codes:
             return self.language_codes[0]
         return None
@@ -254,7 +254,7 @@ class TwineFile:
                 return True
         return False
 
-    def fallback_languages(self, language: str, include_default:bool = False) -> List[str]:
+    def fallback_languages(self, language: str, include_default:bool = False) -> list[str]:
         fallbacks = []
 
         # Check specific mapping
@@ -292,14 +292,15 @@ class TwineFile:
             TwineError: If file doesn't exist or parsing fails
         """
         from pathlib import Path
+
         from twine import TwineError
 
         file_path = Path(path)
         if not file_path.is_file():
             raise TwineError(f"File does not exist: {path}")
 
-        current_section: Optional[TwineSection] = None
-        current_definition: Optional[TwineDefinition] = None
+        current_section: TwineSection | None = None
+        current_definition: TwineDefinition | None = None
 
         with open(file_path, "r", encoding="utf-8") as f:
             for line_num, line in enumerate(f, 1):
@@ -442,7 +443,7 @@ class TwineFile:
 
     def _write_value(
         self, definition: TwineDefinition, language: str, file
-    ) -> Optional[str]:
+    ) -> str | None:
         """Write a single translation value to file."""
         output = None
         if language in definition.plural_translations:

@@ -8,7 +8,7 @@ import pytest
 
 from twine import TwineError
 from twine.formatters.qt import QtFormatter
-from twine.twine_file import TwineFile, TwineSection, TwineDefinition
+from twine.twine_file import TwineDefinition, TwineFile, TwineSection
 
 
 @pytest.fixture

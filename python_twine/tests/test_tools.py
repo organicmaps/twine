@@ -1,5 +1,6 @@
 from twine.formatters.tools import replace_with_filter
 
+
 class TestTools:
     def test_replace_with_filter(self):
         # Edge case

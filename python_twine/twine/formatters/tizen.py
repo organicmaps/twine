@@ -4,7 +4,7 @@ Tizen XML formatter.
 
 import html
 import re
-from typing import Optional, TextIO
+from typing import ClassVar, TextIO
 
 from twine.formatters import AbstractFormatter
 from twine.placeholders import (
@@ -16,7 +16,7 @@ from twine.placeholders import (
 class TizenFormatter(AbstractFormatter):
     """Formatter for Tizen XML string resources."""
 
-    LANG_CODES = {
+    LANG_CODES: ClassVar[dict[str, str]] = {
         "eng-GB": "en",
         "rus-RU": "ru",
         "fra-FR": "fr",
@@ -42,13 +42,13 @@ class TizenFormatter(AbstractFormatter):
         try:
             entries = os.listdir(path)
             return any(item.startswith("values") for item in entries)
-        except (OSError, IOError):
+        except OSError:
             return False
 
     def default_file_name(self) -> str:
         return "strings.xml"
 
-    def determine_language_given_path(self, path: str) -> Optional[str]:
+    def determine_language_given_path(self, path: str) -> str | None:
         """Extract language from Tizen path."""
         from pathlib import Path
 
@@ -150,7 +150,7 @@ class TizenFormatter(AbstractFormatter):
         """Format section header as comment."""
         return f"\t<!-- SECTION: {section.name} -->"
 
-    def format_comment(self, definition, lang: str) -> Optional[str]:
+    def format_comment(self, definition, lang: str) -> str | None:
         """Format comment, replacing -- with em dash."""
         if definition.comment:
             comment = definition.comment.replace("--", "—")

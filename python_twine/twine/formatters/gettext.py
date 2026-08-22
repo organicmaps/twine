@@ -3,10 +3,10 @@ Gettext .po formatter.
 """
 
 import re
-from typing import Optional, TextIO
+from typing import TextIO
 
-from twine.formatters import AbstractFormatter
 from twine import __version__
+from twine.formatters import AbstractFormatter
 
 COMMENT_REGEX = re.compile(r'#\.\s*"(.*)"$', re.MULTILINE)
 SECTION_REGEX = re.compile(r'# SECTION: (.+)$', re.MULTILINE)
@@ -76,7 +76,7 @@ class GettextFormatter(AbstractFormatter):
                 if comment and not comment.startswith("SECTION:"):
                     self.set_comment_for_key(key, comment)
 
-    def format_file(self, lang: str) -> Optional[str]:
+    def format_file(self, lang: str) -> str | None:
         """Format file, tracking default language."""
         if self.twine_file.language_codes:
             self.default_lang = self.twine_file.language_codes[0]
@@ -106,14 +106,14 @@ class GettextFormatter(AbstractFormatter):
 
         return True
 
-    def format_comment(self, definition, lang: str) -> Optional[str]:
+    def format_comment(self, definition, lang: str) -> str | None:
         """Format comment as translator comment."""
         if definition.comment:
             escaped = self.escape_quotes(definition.comment)
             return f'#. "{escaped}"\n'
         return None
 
-    def format_key_value(self, definition, lang: str) -> Optional[str]:
+    def format_key_value(self, definition, lang: str) -> str | None:
         """Format key-value with msgctxt, msgid, and msgstr."""
         value = definition.translation_for_lang(lang)
         if value is None:

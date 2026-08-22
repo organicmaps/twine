@@ -2,11 +2,12 @@
 Tests for core Twine data models.
 """
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
-from twine.twine_file import TwineFile, TwineDefinition, TwineSection
+import pytest
+
+from twine.twine_file import TwineDefinition, TwineFile, TwineSection
 
 
 class TestTwineDefinition:

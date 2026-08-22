@@ -11,65 +11,63 @@ a Qt TS file for a language, the formatter emits one <numerusform> per
 entry in QT_NUMERUS_FORMS[lang], in order.
 """
 
-from typing import Dict, List, Optional
-
 
 # 1 form: Universal (lookup returns "other")
-_JAPANESE_STYLE: List[str] = ["other"]
+_JAPANESE_STYLE: list[str] = ["other"]
 
 # 2 forms: n != 1 → other
-_ENGLISH_STYLE: List[str] = ["one", "other"]
+_ENGLISH_STYLE: list[str] = ["one", "other"]
 
 # 2 forms: n <= 1 → one. Same positional shape as english style.
-_FRENCH_STYLE: List[str] = ["one", "other"]
+_FRENCH_STYLE: list[str] = ["one", "other"]
 
 # 2 forms: n%10==1 && n%100!=11 → one, else other.
-_ICELANDIC: List[str] = ["one", "other"]
+_ICELANDIC: list[str] = ["one", "other"]
 
 # 3 forms: one, other, zero. Note: Qt's positional order puts zero last.
-_LATVIAN: List[str] = ["one", "other", "zero"]
+_LATVIAN: list[str] = ["one", "other", "zero"]
 
 # 3 forms: n==1, n==2, else.
-_IRISH_STYLE: List[str] = ["one", "two", "other"]
+_IRISH_STYLE: list[str] = ["one", "two", "other"]
 
 # 4 forms: 1/11, 2/12, 3-19, else.
-_GAELIC_STYLE: List[str] = ["one", "two", "few", "other"]
+_GAELIC_STYLE: list[str] = ["one", "two", "few", "other"]
 
 # 3 forms: 1, 2-4, else.
-_SLOVAK_STYLE: List[str] = ["one", "few", "other"]
+_SLOVAK_STYLE: list[str] = ["one", "few", "other"]
 
 # 3 forms: %100==1, %100==2, else.
-_MACEDONIAN: List[str] = ["one", "two", "other"]
+_MACEDONIAN: list[str] = ["one", "two", "other"]
 
 # 3 forms: %10==1 & %100!=11; %10!=0 & %100 not in 10-19; else.
-_LITHUANIAN: List[str] = ["one", "few", "many"]
+_LITHUANIAN: list[str] = ["one", "few", "many"]
 
 # 3 forms: %10==1 & %100!=11; %10 in 2-4 & %100 not in 10-19; else.
 # Used by ru, uk, be, hr, sr, bs.
-_RUSSIAN_STYLE: List[str] = ["one", "few", "many"]
+_RUSSIAN_STYLE: list[str] = ["one", "few", "many"]
 
 # 3 forms: 1; %10 in 2-4 & %100 not in 10-19; else.
-_POLISH: List[str] = ["one", "few", "many"]
+_POLISH: list[str] = ["one", "few", "many"]
 
 # 3 forms: 1; 0 or %100 in 1-19; else.
-_ROMANIAN: List[str] = ["one", "few", "other"]
+_ROMANIAN: list[str] = ["one", "few", "other"]
 
 # 4 forms: %100==1; %100==2; %100 in 3-4; else.
-_SLOVENIAN: List[str] = ["one", "two", "few", "other"]
+_SLOVENIAN: list[str] = ["one", "two", "few", "other"]
 
 # 4 forms: 1; 0 or %100 in 1-10; %100 in 11-19; else.
-_MALTESE: List[str] = ["one", "few", "many", "other"]
+_MALTESE: list[str] = ["one", "few", "many", "other"]
 
 # 5 forms: 0; 1; 2-5; 6; else.
-_WELSH: List[str] = ["zero", "one", "two", "few", "other"]
+_WELSH: list[str] = ["zero", "one", "two", "few", "other"]
 
 # 6 forms: 0; 1; 2; %100 in 3-10; %100 >= 11; else.
-_ARABIC: List[str] = ["zero", "one", "two", "few", "many", "other"]
+_ARABIC: list[str] = ["zero", "one", "two", "few", "many", "other"]
 
 
 # Map from CLDR/ISO language code → positional CLDR-category list.
 # Region-specific overrides go through region-aware lookup below.
-QT_NUMERUS_FORMS: Dict[str, List[str]] = {
+QT_NUMERUS_FORMS: dict[str, list[str]] = {
     # japaneseStyle
     "bi": _JAPANESE_STYLE,
     "my": _JAPANESE_STYLE,
@@ -249,7 +247,7 @@ def _base_language(lang: str) -> str:
     return lang
 
 
-def get_qt_numerus_forms(lang: str) -> Optional[List[str]]:
+def get_qt_numerus_forms(lang: str) -> list[str] | None:
     """
     Return positional CLDR-category list for `lang`, or None if Qt has no
     plural rule for this language.
