@@ -140,3 +140,37 @@ class TestReferences:
         definition.translations["en"] = "value"
 
         assert definition.translation_for_lang("en") == "value"
+
+    @pytest.mark.parametrize(
+        ("languages", "expected"),
+        [
+            (["fr", "en"], "Pont"),
+            (["de", "fr", "en"], "Pont"),
+            (["de", "en"], "Pedestrian Bridge"),
+            (["de"], None),
+            ([], None),
+        ],
+    )
+    def test_reference_respects_language_priority(
+        self, setup_references, languages, expected
+    ):
+        definition = setup_references
+        definition.translations["en"] = "Pedestrian Bridge"
+        definition.reference.translations["fr"] = "Pont"
+
+        assert definition.translation_for_lang(languages) == expected
+
+    def test_language_priority_through_reference_chain(self, setup_references):
+        definition = setup_references
+        definition.translations["en"] = "Pedestrian Bridge"
+        reference = TwineDefinition("bridge")
+        reference.translations["fr"] = "Pont"
+        definition.reference.reference = reference
+
+        assert definition.translation_for_lang(["fr", "en"]) == "Pont"
+
+    def test_empty_translation_overrides_reference(self, setup_references):
+        definition = setup_references
+        definition.translations["en"] = ""
+
+        assert definition.translation_for_lang(["en"]) == ""

@@ -49,11 +49,14 @@ module Twine
     end
 
     def translation_for_lang(lang)
-      translation = [lang].flatten.map { |l| @translations[l] }.compact.first
+      # Language priority also applies to inherited translations.
+      [lang].flatten.each do |language|
+        translation = @translations[language]
+        translation = reference.translation_for_lang(language) if translation.nil? && reference
+        return translation unless translation.nil?
+      end
 
-      translation = reference.translation_for_lang(lang) if translation.nil? && reference
-
-      return translation
+      nil
     end
 
     def plural_translation_for_lang(lang)
