@@ -97,30 +97,18 @@ class TwineDefinition:
         return True
 
     def translation_for_lang(self, lang: str | list[str]) -> str | None:
-        """
-        Get translation for a language, checking reference if not found.
-
-        Args:
-            lang: Language code (can be str or list)
-
-        Returns:
-            Translation string or None
-        """
-        # Handle both single lang and list of langs
+        """Resolve languages in priority order, including inherited translations."""
         if isinstance(lang, list):
-            for ln in lang:
-                if ln in self.translations:
-                    return self.translations[ln]
-            lang_to_check = lang
-        else:
-            if lang in self.translations:
-                return self.translations[lang]
-            lang_to_check = [lang]
+            for language in lang:
+                translation = self.translation_for_lang(language)
+                if translation is not None:
+                    return translation
+            return None
 
-        # Check reference
+        if lang in self.translations:
+            return self.translations[lang]
         if self.reference:
-            return self.reference.translation_for_lang(lang_to_check)
-
+            return self.reference.translation_for_lang(lang)
         return None
 
     def find_plural_lang_fallback(self, fallback_langs: list[str]) -> str | None:

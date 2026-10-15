@@ -107,5 +107,31 @@ class TestTwineDefinition < TwineTest
 
       assert_equal 'value', @definition.translation_for_lang('en')
     end
+
+    def test_reference_respects_language_priority
+      @definition.translations['en'] = 'Pedestrian Bridge'
+      @reference.translations['fr'] = 'Pont'
+
+      assert_equal 'Pont', @definition.translation_for_lang(%w(fr en))
+      assert_equal 'Pont', @definition.translation_for_lang(%w(de fr en))
+      assert_equal 'Pedestrian Bridge', @definition.translation_for_lang(%w(de en))
+      assert_nil @definition.translation_for_lang(['de'])
+      assert_nil @definition.translation_for_lang([])
+    end
+
+    def test_language_priority_through_reference_chain
+      @definition.translations['en'] = 'Pedestrian Bridge'
+      reference = Twine::TwineDefinition.new 'bridge'
+      reference.translations['fr'] = 'Pont'
+      @reference.reference = reference
+
+      assert_equal 'Pont', @definition.translation_for_lang(%w(fr en))
+    end
+
+    def test_empty_translation_overrides_reference
+      @definition.translations['en'] = ''
+
+      assert_equal '', @definition.translation_for_lang(['en'])
+    end
   end
 end

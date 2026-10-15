@@ -137,10 +137,25 @@ class TestTranslationFallback:
 
         assert result.definitions_by_key["key1"].translations["de"] == "value1-fr"
 
+    def test_regional_locale_inherits_generic_reference_translation(self, twine_file):
+        reference = TwineDefinition("bridge")
+        reference.translations = {"en": "Bridge", "fr": "Pont"}
+        definition = TwineDefinition("pedestrian_bridge")
+        definition.translations["en"] = "Pedestrian Bridge"
+        definition.reference_key = reference.key
+        definition.reference = reference
+        twine_file.sections[0].definitions.extend([reference, definition])
+        twine_file.definitions_by_key.update(
+            {reference.key: reference, definition.key: definition}
+        )
+
+        result = OutputProcessor(twine_file, {"include": "all"}).process("fr-CA")
+
+        assert result.definitions_by_key["pedestrian_bridge"].translations["fr-CA"] == "Pont"
+
 
 class TestPluralEdgeCases:
-    """Regression tests for plural-definition handling that previously
-    raised KeyError / TypeError before the OutputProcessor fix."""
+    """Plural definitions with partial or missing target-language forms."""
 
     def test_include_translated_with_singular_target_does_not_raise(self):
         """A plural definition whose target language has only a non-plural
@@ -165,9 +180,7 @@ class TestPluralEdgeCases:
         assert "ja" not in processed.plural_translations
 
     def test_no_plural_fallback_available_does_not_raise(self):
-        """When no fallback language has plural data, the OutputProcessor
-        must skip the plural augmentation rather than assigning None and
-        TypeError-ing on `"other" not in None`."""
+        """A singular translation remains usable when no plural fallback exists."""
         twine_file = TwineFile()
         twine_file.language_codes = ["en", "fr"]
         section = TwineSection("Section")
