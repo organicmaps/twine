@@ -2,6 +2,7 @@
 Tests for formatter classes.
 """
 
+import io
 from pathlib import Path
 
 import pytest
@@ -9,6 +10,18 @@ import pytest
 from twine.formatters.android import AndroidFormatter
 from twine.formatters.apple_plural import ApplePluralFormatter
 from twine.twine_file import TwineDefinition, TwineFile, TwineSection
+
+
+def test_android_import_rejects_unknown_plural_category():
+    from twine import TwineError
+
+    formatter = AndroidFormatter()
+    formatter.options = {"consume_all": True}
+    with pytest.raises(TwineError, match=r"Unknown plural key\(s\) for \[count\] in 'fr': othre"):
+        formatter.read(
+            io.StringIO('<resources><plurals name="count"><item quantity="othre">%d objets</item></plurals></resources>'),
+            "fr",
+        )
 
 
 class TestAndroidPluralFormatter:

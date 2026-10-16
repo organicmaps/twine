@@ -124,9 +124,10 @@ class AbstractFormatter(ABC):
             self.twine_file.add_language_code(lang)
 
     def set_translation_for_key_plural(self, key: str, lang: str, values: dict[str, str], section_name:str | None):
-        """ Set plular values translation for a key in a specific language.
-            This method is similar to set_translation_for_key() but with dict values.
-        """
+        """Set named plural forms and their representative 'other' translation."""
+        unknown = values.keys() - TwineDefinition.PLURAL_KEYS
+        if unknown:
+            raise twine.TwineError(f"Unknown plural key(s) for [{key}] in '{lang}': {', '.join(sorted(unknown))}")
         # Normalize newlines
         values = {key:val.replace("\n", "\\n") for (key, val) in values.items()}
 

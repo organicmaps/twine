@@ -121,11 +121,7 @@ class TwineDefinition:
             return dict(
                 sorted(
                     plural_trans.items(),
-                    key=lambda x: (
-                        self.PLURAL_KEYS.index(x[0])
-                        if x[0] in self.PLURAL_KEYS
-                        else 999
-                    ),
+                    key=lambda x: self.PLURAL_KEYS.index(x[0]),
                 )
             )
         # An explicit singular value overrides plural forms from a reference.
@@ -314,13 +310,9 @@ class TwineFile:
                             # Plural translations
                             if plural_key:
                                 if plural_key not in TwineDefinition.PLURAL_KEYS:
-                                    import twine
-
-                                    print(
-                                        f"Warning: Unknown plural key {plural_key}",
-                                        file=twine.stderr,
+                                    raise TwineError(
+                                        f"Unknown plural key '{plural_key}' at line {line_num} of {path}"
                                     )
-                                    continue
 
                                 if key not in current_definition.plural_translations:
                                     current_definition.plural_translations[key] = {}
