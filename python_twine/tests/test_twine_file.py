@@ -234,8 +234,14 @@ class TestTwineFileOptimizations:
             ("[bridge]\nen = Bridge\nfr = Pont\nfr-CA = Pont\n"
              "[pedestrian]\nref = bridge\nfr = Passerelle\n", False),
             ("[bridge]\nfr-CA = Pont\nfr = Pont\nen = Bridge\n", True),
+            ("[bridge]\nen = Bridge\nzh-Hans:one = 桥\nzh-Hans:other = 桥\n"
+             "[pedestrian]\nref = bridge\nzh = 桥\nzh-CN = 桥\n", False),
+            ("[bridge]\nen = Bridges\nfr:one = Pont\nfr-CA = Bridges\n", True),
         ],
-        ids=["inherited-script", "inherited-generic", "alias-consumer", "regional-developer"],
+        ids=[
+            "inherited-script", "inherited-generic", "alias-consumer", "regional-developer",
+            "inherited-plural", "partial-plural",
+        ],
     )
     def test_optimization_preserves_generated_translations(
         self, tmp_path, content, fallback_to_default
@@ -250,7 +256,10 @@ class TestTwineFileOptimizations:
             processor = OutputProcessor(source, {"include": "all"})
             return {
                 language: {
-                    key: definition.translations[language]
+                    key: (
+                        definition.translations.get(language),
+                        definition.plural_translations.get(language),
+                    )
                     for key, definition in processor.process(language).definitions_by_key.items()
                 }
                 for language in languages

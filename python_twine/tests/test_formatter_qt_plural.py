@@ -29,12 +29,10 @@ def formatter():
 
 def _set_plural(definition: TwineDefinition, lang: str, forms: dict):
     """Mirror how the strings.txt parser populates a plural: store both
-    plural_translations[lang] and translations[lang] (=other or first form)."""
+    plural_translations[lang] and translations[lang] when 'other' is present."""
     definition.plural_translations[lang] = forms
     if "other" in forms:
         definition.translations[lang] = forms["other"]
-    elif forms:
-        definition.translations[lang] = next(iter(forms.values()))
 
 
 def _tracks_twine_file() -> TwineFile:

@@ -8,6 +8,7 @@ from typing import ClassVar, TextIO
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
 
+from twine import TwineError
 from twine.formatters import AbstractFormatter
 from twine.formatters.tools import replace_with_filter
 from twine.placeholders import (
@@ -125,8 +126,6 @@ class AndroidFormatter(AbstractFormatter):
             parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True))
             root = ET.fromstring(content, parser)
         except ET.ParseError as e:
-            from twine import TwineError
-
             raise TwineError(f"Failed to parse XML: {e}")
 
         comment = None
@@ -209,6 +208,8 @@ class AndroidFormatter(AbstractFormatter):
 
     def format_plural_keys(self, key: str, plural_hash: dict[str, str]) -> str:
         """Format Android plurals."""
+        if "other" not in plural_hash:
+            raise TwineError(f"Plural translation for [{key}] has no 'other' form")
         result = f'    <plurals name="{key}">\n'
 
         items = []

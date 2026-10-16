@@ -277,6 +277,7 @@ class Runner:
 
     def validate_twine_file(self):
         """Validate the Twine data file."""
+        self.twine_file.validate_references()
         import re
 
         from twine.placeholders import contains_python_specific_placeholder

@@ -91,8 +91,10 @@ class AbstractFormatter(ABC):
                     definition.reference_key
                 )
 
-            # Only set if no reference or value differs from reference
-            if not reference or value != reference.translations.get(lang):
+            # Equal scalar text can still override inherited plural forms.
+            if (not reference or lang in definition.translations
+                    or reference.plural_translation_for_lang(lang) is not None
+                    or value != reference.translation_for_lang(lang)):
                 if lang in definition.translations and definition.translations[lang] != value:
                     msg = (f"Translation '{value}' overrides existing translation '{definition.translations[lang]}' "
                            f"for key '{key}' and lang '{lang}' (comment '{definition.comment}').")
@@ -137,8 +139,8 @@ class AbstractFormatter(ABC):
                     definition.reference_key
                 )
 
-            # Only set if no reference or value differs from reference
-            if not reference or values != reference.plural_translations.get(lang):
+            if (not reference or lang in definition.translations or lang in definition.plural_translations
+                    or values != reference.plural_translation_for_lang(lang)):
                 if lang in definition.plural_translations and definition.plural_translations[lang] != values:
                     for quantity, value_old, value_new in find_dict_diff(definition.plural_translations[lang], values):
                         msg = (f"Translation '{value_new}' overrides existing translation '{value_old}' "
@@ -166,6 +168,12 @@ class AbstractFormatter(ABC):
 
         else:
             print(f"WARNING: '{key}' not found in twine file.", file=twine.stdout)
+
+        definition = self.twine_file.definitions_by_key.get(key)
+        if definition is not None:
+            forms = definition.plural_translations.get(lang, {})
+            if "other" in forms:
+                definition.translations[lang] = forms["other"]
 
         # Add language code if not present
         if lang not in self.twine_file.language_codes:
@@ -263,12 +271,16 @@ class AbstractFormatter(ABC):
         if not processed_twine_file.definitions_by_key:
             return None
 
+        sections = self.format_sections(processed_twine_file, lang)
+        if not sections:
+            return None
+
         result = ""
         header = self.format_header(lang)
         if header:
             result += header + "\n"
 
-        result += self.format_sections(processed_twine_file, lang)
+        result += sections
         return result
 
     def format_header(self, lang: str) -> str | None:
@@ -289,7 +301,9 @@ class AbstractFormatter(ABC):
 
     def should_include_definition(self, definition: TwineDefinition, lang: str) -> bool:
         """Check if a definition should be included for a language."""
-        return definition.translation_for_lang(lang) is not None
+        return definition.translation_for_lang(lang) is not None or (
+            self.SUPPORTS_PLURAL and definition.plural_translation_for_lang(lang) is not None
+        )
 
     def format_section(self, section: TwineSection, lang: str) -> str | None:
         """Format a single section."""

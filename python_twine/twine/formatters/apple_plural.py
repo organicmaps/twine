@@ -6,6 +6,7 @@ from typing import TextIO
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
 
+from twine import TwineError
 from twine.formatters.apple import AppleFormatter
 from twine.placeholders import convert_placeholders_from_android_to_twine
 from twine.twine_file import TwineDefinition
@@ -57,6 +58,8 @@ class ApplePluralFormatter(AppleFormatter):
 
     def format_plural_keys(self, key: str, plural_hash: dict[str, str]) -> str:
         """Format plural entries in stringsdict format."""
+        if "other" not in plural_hash:
+            raise TwineError(f"Plural translation for [{key}] has no 'other' form")
         result = f"""\t<key>{key}</key>
 \t<dict>
 \t\t<key>NSStringLocalizedFormatKey</key>
@@ -83,8 +86,6 @@ class ApplePluralFormatter(AppleFormatter):
 
     def read(self, io: TextIO, lang: str):
         """Read Apple .stringsdict file."""
-        from twine import TwineError
-
         content = io.read()
 
         try:
@@ -145,10 +146,6 @@ class ApplePluralFormatter(AppleFormatter):
             # Get or create definition
             if not self.match_default_lang_translation(key_name, lang, plural_hash):
                 self.set_translation_for_key_plural(key_name, lang, plural_hash, section_name=None)
-
-                # Set base translation to 'other' if present
-                if "other" in plural_hash:
-                    self.set_translation_for_key(key_name, lang, plural_hash["other"], section_name=None)
 
             # Set comment if requested
             if comment_text and self.options.get("consume_comments"):
@@ -219,15 +216,11 @@ class ApplePluralFormatter(AppleFormatter):
         )
 
     def match_default_lang_translation(self, key:str, lang:str, value:dict) -> bool:
-        """ Apple strings file for non-default language (es, de, fr, etc) contains
-            default value for not translated keys. That's why in Slovenian .strings
-            file you can find english words.
-            If `value` matches translation from default language, it means that
-            this string is not translated.
-        """
+        """Developer fallback forms do not count as a new translation."""
         default_lang = self.twine_file.get_developer_language_code()
         if default_lang is None:
             return False
         if default_lang == lang:
             return False
-        return self.twine_file.definitions_by_key[key].plural_translations[default_lang] == value
+        definition = self.twine_file.definitions_by_key[key]
+        return definition.plural_translation_for_lang(default_lang) == value

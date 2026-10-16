@@ -117,12 +117,10 @@ class AppleFormatter(AbstractFormatter):
         if default_lang == lang:
             return False
         definition = self.twine_file.definitions_by_key[key]
-        if default_lang in definition.translations:
-            return definition.translations[default_lang] == value
-        elif definition.reference is not None:
-            return definition.reference.translations[default_lang] == value
-        else:
+        default_value = definition.translation_for_lang(default_lang)
+        if default_value is None:
             raise TwineError(f"Default language '{default_lang}' is not available for key [{key}]")
+        return default_value == value
 
     def format_file(self, lang: str) -> str | None:
         """Format file with trailing newline."""

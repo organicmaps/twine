@@ -131,9 +131,8 @@ def test_generate_all_skips_non_language_folders():
 def test_generate_all_skips_non_language_folders_without_a_convention():
     """The folder name alone decides, for formatters with no fixed folder shape.
 
-    gettext has no .lproj/values marker, so this is what actually exercises the
-    runner: handed the full path, the temp directory's own ancestors match the
-    language regex and every folder becomes a language.
+    Flash has no .lproj/values marker. Ancestors can look like language codes,
+    so only the immediate folder name identifies the locale.
     """
     twine_content = """[[General]]
 \t[hello]
@@ -157,7 +156,7 @@ def test_generate_all_skips_non_language_folders_without_a_convention():
         runner = Runner(
             options={
                 "output_path": str(output_path),
-                "format": "gettext",
+                "format": "flash",
                 "include": "all",
             },
             twine_file=twine_file,
@@ -165,9 +164,9 @@ def test_generate_all_skips_non_language_folders_without_a_convention():
         runner.generate_all_localization_files()
 
         for folder in ("en", "de"):
-            assert (output_path / folder / "strings.po").is_file()
+            assert (output_path / folder / "resources.properties").is_file()
 
-        assert not (output_path / "Views" / "strings.po").exists()
+        assert not (output_path / "Views" / "resources.properties").exists()
 
 
 def test_folder_classification_is_stricter_than_path_classification():

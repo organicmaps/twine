@@ -151,12 +151,12 @@ class QtFormatter(AbstractFormatter):
                 f"(key '{definition.key}'). Add it to qt_plural_rules.py."
             )
 
-        # Always read from the original twine_file — the processed definition
-        # only carries target-lang plurals (after the OutputProcessor may have
-        # filled the slot from a fallback language). We need both target and
-        # developer forms for the per-form fallback chain.
+        # Exact-language forms retain their per-form developer fallback.
+        # Otherwise the processed copy supplies the resolved regional forms.
         original = self.twine_file.definitions_by_key.get(definition.key, definition)
-        translated = original.plural_translation_for_lang(lang) or {}
+        translated = original.plural_translation_for_lang(lang)
+        if translated is None:
+            translated = definition.plural_translation_for_lang(lang) or {}
         fallback = self._developer_plural_forms(original)
 
         numerusforms: list[str] = []
