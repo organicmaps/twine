@@ -158,9 +158,7 @@ class TestPluralEdgeCases:
     """Plural definitions with partial or missing target-language forms."""
 
     def test_include_translated_with_singular_target_does_not_raise(self):
-        """A plural definition whose target language has only a non-plural
-        translation must not raise under include='translated'. The plural
-        slot stays absent — the formatter then emits it as a regular message."""
+        """An explicit singular translation has no plural slot in the output."""
         twine_file = TwineFile()
         twine_file.language_codes = ["en", "ja"]
         section = TwineSection("Section")

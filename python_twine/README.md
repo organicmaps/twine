@@ -1,206 +1,118 @@
-# Twine - Python Implementation
+# Twine for Python
 
-This is a Python 3.12 implementation of Twine, a command-line tool for managing translations across multiple localization formats.
+Twine manages translations in a shared text file and imports or generates platform localization files. The Python implementation requires Python 3.12 or newer and uses only the standard library at runtime.
 
 ## Installation
 
-```bash
-cd python_twine
-pip install -e .
+From this directory:
+
+```sh
+python3.12 -m pip install -e .
+python3.12 twine_cli.py --help
 ```
 
-## Usage
+The package also installs the `twine` command. See [INSTALLATION.md](INSTALLATION.md) for development dependencies.
 
-### Generate Android resource files from string.txt
+## Supported formats
 
-```bash
-# Generate a single localization file
-python twine_cli.py generate-localization-file \
-    strings.txt \
-    strings.xml \
-    --tags android-app \
-    --lang en
+| Format option | File type | Plural support |
+| --- | --- | --- |
+| `android` | Android `.xml` | Read and write named forms |
+| `apple` | Apple `.strings` | Singular values; use `apple-plural` for plurals |
+| `apple-plural` | Apple `.stringsdict` | Read and write named forms |
+| `qt` | Qt ID-based `.ts` | Write positional numerus forms; read singular messages |
+| `gettext` | Gettext `.po` | Singular values |
+| `django` | Django `.po` | Singular values |
+| `jquery` | jQuery-localize `.json` | Singular values |
+| `tizen` | Tizen `.xml` | Singular values |
+| `flash` | Flash `.properties` | Singular values |
 
-# Generate all localization files for Spanish
-python twine_cli.py generate-all-localization-files \
-    strings.txt \
-    $OMAPS_REPO/android/app/src/main/res \
-    --tags android-app \
-    --lang es
+Use `--format` when an extension is shared by several formats. Qt plural imports are skipped because positional numerus forms do not uniquely identify CLDR categories.
 
-# Generate all localization files for all available languages
-python twine_cli.py generate-all-localization-files \
-    strings.txt \
-    $OMAPS_REPO/android/sdk/src/main/res \
-    --tags android,android-sdk
+## Generate localization files
 
-# Consume a translation file and update strings.txt file
-# It's better to assign developer language with `-d en` because of Apple .strings file.
-# Untranslated values are replaced with default (English) values in .strings
-# And Twine needs to know default lang to ignore untranslated strings.
-python twine_cli.py consume-localization-file \
-    strings.txt \
-    $OMAPS_REPO/android/app/src/main/res/values-ja/strings.xml
-    -t android,android-app
-    -f android \
-    -d en \
-    --lang ja
+Generate one Spanish Android file, with explicit format and language:
 
-# Consume all translations and update strings.txt file
-# It's better to assign developer language with `-d en` because of Apple .strings file.
-# Untranslated values are replaced with default (English) values in .strings
-# And Twine needs to know default lang to ignore untranslated strings.
-python twine_cli.py consume-all-localization-files \
-    strings.txt \
-    $OMAPS_REPO/iphone/Maps/LocalizedStrings
-    -t apple,apple-maps \
-    -f apple \
-    -d en \
-    --lang ja
-
-# Validate Twine file
-python twine_cli.py validate-twine-file strings.txt
+```sh
+python3.12 twine_cli.py generate-localization-file \
+    strings.txt strings-es.xml \
+    --format android --lang es --tags android-app
 ```
 
-### Validate strings.txt files
+Generate files in existing Android language folders:
 
-Basic validation could be done with command:
-
-```bash
-python twine_cli.py validate-twine-file \
-    $OMAPS_REPO/data/strings/strings.txt
+```sh
+python3.12 twine_cli.py generate-all-localization-files \
+    strings.txt "$OMAPS_REPO/android/sdk/src/main/res" \
+    --format android --tags android,android-sdk --include translated
 ```
 
-This command looks for keys duplicates, missing tags, extra symbols in key name, wrong placeholder formats.
+`generate-all-localization-files` scans existing language folders. Add `--create-folders` to create folders for languages listed in the Twine file. This command has no `--lang` option; use single-file generation to select one language. `--file-name` overrides the formatter's default filename.
 
-Also, you can get usage report by running:
+`--include translated` selects definitions with a translation or plural forms for the requested language, including inherited values. `--include untranslated` selects definitions without them. The default, `all`, also uses language fallbacks.
 
-```bash
-python twine_cli.py validate-unused-strings \
-    $OMAPS_REPO/data/strings/strings.txt
-    --android-src-root $OMAPS_REPO/android
-    --core-src-root $OMAPS_REPO/libs
-    --ios-src-root $OMAPS_REPO/iphone
+## Import translations
+
+Import one Android file:
+
+```sh
+python3.12 twine_cli.py consume-localization-file \
+    strings.txt "$OMAPS_REPO/android/app/src/main/res/values-ja/strings.xml" \
+    --format android --lang ja --developer-language en --tags android,android-app
 ```
 
-This command will print list of string in `strings.txt` which are not found in source code.
+Import all existing Apple language folders and deduplicate matching values:
 
-## Project Structure
-
-```
-python_twine/
-├── twine/                    # Main package
-│   ├── __init__.py          # Package initialization
-│   ├── twine_file.py        # Core data models (TwineFile, TwineDefinition, TwineSection)
-│   ├── cli.py               # Command-line interface
-│   ├── runner.py            # Command orchestration
-│   ├── placeholders.py      # Placeholder conversion utilities
-│   ├── output_processor.py  # Output filtering and processing
-│   ├── encoding.py          # Encoding detection
-│   └── formatters/          # Format implementations
-│       ├── __init__.py      # Abstract formatter base
-│       ├── android.py       # Android XML strings
-│       ├── apple.py         # iOS/macOS .strings
-│       ├── gettext.py       # Gettext .po files
-│       └── ...              # Other formatters
-├── tests/                    # Test suite
-├── pyproject.toml           # Project configuration
-└── README.md                # This file
+```sh
+python3.12 twine_cli.py consume-all-localization-files \
+    strings.txt "$OMAPS_REPO/iphone/Maps/LocalizedStrings" \
+    --format apple --developer-language en --tags apple,apple-maps
 ```
 
-## Architecture
+The developer language defaults to the first language in the Twine file. Apple imports compare against developer text because generated resources can contain developer-language fallbacks. `--consume-all` adds unknown keys; otherwise they are reported and skipped. `--consume-comments` imports comments.
 
-### Core Data Model
+## Definitions, references, and fallbacks
 
-- **TwineFile**: Central data structure containing sections and definitions
-  - Manages language codes with developer language at index 0
-  - Reads/writes Twine data files in INI-like format
+`TwineFile` stores sections, definitions, and language codes. Definitions can inherit translations, plural forms, comments, and tag matching through `ref`. An explicit singular translation, including an empty value, overrides inherited plural forms for that language.
 
-- **TwineDefinition**: Represents a translatable string
-  - Key, translations dict, tags, comments
-  - Support for plural translations
-  - Reference system for inheritance
+`OutputProcessor` filters definitions and selects language text and forms into independent output collections. Regional fallback prefers an explicit Chinese script mapping, then the base language, then the developer language. Partial plural forms can use fallback text for a missing `other` form. Android and Apple plural output require `other` and fail if it cannot be resolved; Qt uses its positional plural rule table and per-form developer fallback.
 
-- **TwineSection**: Groups related definitions
+Twine placeholders use `%@` for object/string arguments. Formatters convert them to the target platform's syntax, such as `%s` on Android or numbered arguments in Qt.
 
-### Formatter Pattern
+Tags separated by commas form an OR group. Repeated `--tags` options combine groups with AND; for example, `--tags android,apple --tags ~deprecated`. The CLI includes untagged definitions by default; `--no-untagged` excludes them.
 
-All format support uses the Abstract Formatter pattern:
+## Validation
 
-```python
-from twine.formatters import AbstractFormatter
-
-class MyFormatter(AbstractFormatter):
-    def format_name(self) -> str:
-        return "myformat"
-
-    def extension(self) -> str:
-        return ".ext"
-
-    def read(self, io: TextIO, lang: str):
-        # Parse format
-        pass
-
-    def format_file(self, lang: str) -> str:
-        # Generate format
-        pass
+```sh
+python3.12 twine_cli.py validate-twine-file strings.txt --pedantic
 ```
 
-### Placeholder Conversion
+Reading a Twine file rejects malformed lines, unknown plural categories, dangling references, and reference cycles. Explicit validation also checks duplicate keys, invalid key characters, and Python-specific placeholders. `--pedantic` makes missing tags an error.
 
-Twine uses `@` for string placeholders (iOS convention):
-- `%@` is the standard Twine placeholder
-- Converted to `%s` for Android
-- Converted to `{0}` for Flash
-- Module: `twine.placeholders`
+Find keys that are not referenced by application source:
+
+```sh
+python3.12 twine_cli.py validate-unused-strings \
+    "$OMAPS_REPO/data/strings/strings.txt" \
+    --android-src-root "$OMAPS_REPO/android" \
+    --core-src-root "$OMAPS_REPO/libs" \
+    --ios-src-root "$OMAPS_REPO/iphone"
+```
 
 ## Development
 
-### Running Tests
-
-```bash
-poetry install --extras dev
-pytest
+```sh
+python3.12 -m pip install -e '.[dev]' ruff
+python3.12 -m pytest
+ruff check --target-version=py312 .
 ```
 
-### Key Differences from Ruby Version
+The [test guide](TEST_PORTING_SUMMARY.md) describes the suite. Qt compilation tests run when `lrelease` is available and are skipped otherwise.
 
-1. **Type Hints**: Full type annotations for better IDE support
-2. **Pathlib**: Uses `pathlib.Path` instead of string paths
-3. **ABC Module**: Uses Python's `abc` for abstract base classes
-4. **Argparse**: Uses argparse instead of OptionParser
-5. **Context Managers**: Proper file handling with `with` statements
+Core modules are `twine_file.py` (models and parsing), `languages.py` (fallback order), `output_processor.py` (output selection), `runner.py` (commands), and `formatters/` (format-specific import and generation). New formatters inherit `AbstractFormatter`, implement its abstract methods and formatting hooks, register in `formatters/registry.py`, and add tests in `tests/test_*.py`.
 
-## Conversion Status
-
-### ✅ Completed
-- Core data models (TwineFile, TwineDefinition, TwineSection)
-- Placeholder conversion utilities
-- Output processor
-- Encoding detection
-- Abstract formatter base
-- CLI infrastructure
-- Runner orchestration
-
-### 🚧 In Progress
-- Concrete formatters (Android, Apple, Gettext, etc.)
-
-### 📋 TODO
-- Complete all formatters
-- Test suite conversion
-- Archive support (zip handling)
-- Plugin system
-
-## Contributing
-
-When adding new formatters:
-
-1. Inherit from `AbstractFormatter` in `twine/formatters/`
-2. Implement required methods: `format_name()`, `extension()`, `read()`, `default_file_name()`
-3. Handle language code mapping in `determine_language_given_path()`
-4. Implement `key_value_pattern()` for output formatting
-5. Add tests in `tests/formatters/test_<format>.py`
+Archive commands and external formatter plugins are not implemented in the Python CLI. See [CONVERSION_STATUS.md](CONVERSION_STATUS.md) for the supported command list.
 
 ## License
 
-MIT License (same as Ruby version)
+MIT; see the repository's [LICENSE](../LICENSE).

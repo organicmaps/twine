@@ -36,7 +36,7 @@ def _set_plural(definition: TwineDefinition, lang: str, forms: dict):
 
 
 def _tracks_twine_file() -> TwineFile:
-    """Mirrors the [tracks] entry in OM's strings.txt at the time of writing."""
+    """Representative named forms for Qt's supported plural rule families."""
     twine_file = TwineFile()
     twine_file.language_codes = ["en", "ru", "ar", "ja", "fr", "uk"]
     section = TwineSection("Bookmarks")
@@ -140,9 +140,7 @@ class TestPluralWrite:
         assert "<numerusform>%n トラック</numerusform>" in output
 
     def test_uk_per_form_fallback_uses_developer_other(self, formatter):
-        """Ukrainian strings.txt provides one/few/many. The Qt-uk table is
-        ['one', 'few', 'many'] so no fallback needed; this checks that we
-        don't accidentally insert a 4th form."""
+        """Qt's Ukrainian rule uses one/few/many, without a CLDR other slot."""
         formatter.twine_file = _tracks_twine_file()
         output = formatter.format_file("uk")
         assert output.count("<numerusform>") == 3

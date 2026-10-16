@@ -219,7 +219,7 @@ class TestApplePluralFormatter:
         return twine_file
 
     def test_read_stringsdict(self, formatter:ApplePluralFormatter, fixtures_dir):
-        """Test reading Android XML format with <plural/> tags."""
+        """Read named plural forms from an Apple stringsdict."""
         fixture_path = fixtures_dir / "formatter_apple_plurals.stringsdict"
         with open(fixture_path, "r", encoding="utf-8") as f:
             formatter.read(f, "en")
