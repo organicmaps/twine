@@ -222,5 +222,5 @@ class ApplePluralFormatter(AppleFormatter):
             return False
         if default_lang == lang:
             return False
-        definition = self.twine_file.definitions_by_key[key]
-        return definition.plural_translation_for_lang(default_lang) == value
+        definition = self.twine_file.definitions_by_key.get(key)
+        return definition is not None and definition.plural_translation_for_lang(default_lang) == value
