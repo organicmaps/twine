@@ -206,6 +206,16 @@ es = Prueba
 
 
 class TestTwineFileReader:
+    @pytest.mark.parametrize("quantity", ["othre", "ONE"])
+    def test_unknown_plural_category_reports_source_location(self, tmp_path, quantity):
+        from twine import TwineError
+
+        path = tmp_path / "strings.txt"
+        path.write_text(f"[count]\nen:other = %d items\nfr:{quantity} = %d objets\n", encoding="utf-8")
+        with pytest.raises(TwineError, match=f"Unknown plural key '{quantity}' at line 3") as error:
+            TwineFile().read(str(path))
+        assert str(path) in str(error.value)
+
     @pytest.fixture
     def fixtures_dir(self):
         """Get fixtures directory path."""
