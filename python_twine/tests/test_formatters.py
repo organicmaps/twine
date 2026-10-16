@@ -189,7 +189,7 @@ class TestAndroidFormatter(FormatterTestData):
                 == "<![CDATA[<html>bla & bla</html>]]> &amp; test")
 
     def test_writer_escape_quote(self, formatter):
-        """Test ampersand escaping."""
+        """Preserve attribute quotes and escape text quotes outside CDATA."""
         assert formatter.escape_value('"') == '\\"'
 
         assert (formatter.escape_value('<a href=\"omaps.app/?lang=en&theme=dark\">"Home"</a>')
@@ -202,17 +202,9 @@ class TestAndroidFormatter(FormatterTestData):
                 == '<![CDATA["Back Home"]]> &amp; \\"Support\\"')
 
     def test_writer_escape_apostrophe(self, formatter):
-        """Test ampersand escaping."""
-        assert formatter.escape_value('"') == '\\"'
-
-        assert (formatter.escape_value('<a href=\"omaps.app/?lang=en&theme=dark\">"Home"</a>')
-                == '<a href="omaps.app/?lang=en&theme=dark">\\"Home\\"</a>')
-
-        value_with_cdata = '<![CDATA["Back Home"]]>'
-        assert formatter.escape_value(value_with_cdata) == value_with_cdata
-
-        assert (formatter.escape_value('<![CDATA["Back Home"]]> & "Support"')
-                == '<![CDATA["Back Home"]]> &amp; \\"Support\\"')
+        """Escape apostrophes outside CDATA."""
+        assert formatter.escape_value("Don't") == "Don\\'t"
+        assert formatter.escape_value("<![CDATA[Don't]]>") == "<![CDATA[Don't]]>"
 
     def test_writer_escape_angle_bracket(self, formatter):
         """Test '<' escaping."""
@@ -347,7 +339,7 @@ class TestDjangoFormatter(FormatterTestData):
         return Path(__file__).parent / "fixtures"
 
     def test_read_format(self, formatter, fixtures_dir):
-        """Test reading Gettext .po format."""
+        """Read the Django PO fixture."""
         fixture_path = fixtures_dir / "formatter_django.po"
         with open(fixture_path, "r", encoding="utf-8") as f:
             formatter.read(f, "en")
@@ -379,7 +371,7 @@ class TestFlashFormatter(FormatterTestData):
         return Path(__file__).parent / "fixtures"
 
     def test_read_format(self, formatter, fixtures_dir):
-        """Test reading Gettext .po format."""
+        """Read the Flash properties fixture."""
         fixture_path = fixtures_dir / "formatter_flash.properties"
         with open(fixture_path, "r", encoding="utf-8") as f:
             formatter.read(f, "en")
