@@ -105,18 +105,15 @@ class AppleFormatter(AbstractFormatter):
                 last_comment = None
 
     def match_default_lang_translation(self, key:str, lang:str, value:str):
-        """ Apple strings file for non-default language (es, de, fr, etc) contains
-            default value for not translated keys. That's why in Slovenian .strings
-            file you can find english words.
-            If `value` matches translation from default language, it means that
-            this string is not translated.
-        """
+        """Developer fallback text does not count as a new translation."""
         default_lang = self.twine_file.get_developer_language_code()
         if default_lang is None:
             return False
         if default_lang == lang:
             return False
-        definition = self.twine_file.definitions_by_key[key]
+        definition = self.twine_file.definitions_by_key.get(key)
+        if definition is None:
+            return False
         default_value = definition.translation_for_lang(default_lang)
         if default_value is None:
             raise TwineError(f"Default language '{default_lang}' is not available for key [{key}]")
