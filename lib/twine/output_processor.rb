@@ -2,6 +2,14 @@ module Twine
   module Processors
 
     class OutputProcessor
+      FALLBACK_MAPPING = {
+        'zh-CN' => 'zh-Hans',
+        'zh-TW' => 'zh-Hant',
+        'zh-HK' => 'zh-Hant',
+        'zh-MO' => 'zh-Hant'
+      }.freeze
+      REGIONAL_LANGUAGE = /\A([a-zA-Z]{2,3})-[a-zA-Z]+/
+
       def initialize(twine_file, options)
         @twine_file = twine_file
         @options = options
@@ -12,35 +20,32 @@ module Twine
       end
 
       def fallback_languages(language)
-        fallback_mapping = {
-          'zh-CN' => 'zh-Hans', # if we don't have a zh-CN translation, try zh-Hans before en
-          'zh-TW' => 'zh-Hant' # if we don't have a zh-TW translation, try zh-Hant before en
-        }
-
-        # Regional dialect fallbacks to generic language (for example: 'es-MX' to 'es' instead of default 'en').
-        if language.match(/([a-zA-Z]{2})-[a-zA-Z]+/)
-          generic_language = language.gsub(/([a-zA-Z])-[a-zA-Z]+/, '\1')
-        end
-
-        [fallback_mapping[language], generic_language, default_language].flatten.compact
+        match = REGIONAL_LANGUAGE.match(language)
+        [FALLBACK_MAPPING[language], match && match[1], default_language]
+          .compact.uniq.reject { |candidate| candidate == language }
       end
 
       def process(language)
         result = TwineFile.new
+        fallbacks = fallback_languages(language)
+        include_option = @options[:include]
+        tags = @options[:tags]
+        untagged = @options[:untagged]
 
         result.language_codes.concat @twine_file.language_codes
         @twine_file.sections.each do |section|
           new_section = TwineSection.new section.name
 
           section.definitions.each do |definition|
-            next unless definition.matches_tags?(@options[:tags], @options[:untagged])
+            next unless definition.matches_tags?(tags, untagged)
 
             value = definition.translation_for_lang(language)
+            has_translation = !value.nil?
 
-            next if value && @options[:include] == :untranslated
+            next if has_translation && include_option == :untranslated
 
-            if value.nil? && @options[:include] != :translated
-              value = definition.translation_for_lang(fallback_languages(language))
+            if !has_translation && include_option != :translated
+              value = definition.translation_for_lang(fallbacks)
             end
 
             next unless value
@@ -48,12 +53,17 @@ module Twine
             new_definition = definition.dup
             new_definition.translations[language] = value
 
-            if definition.is_plural?
-              # If definition is plural, but no translation found -> create
-              # Then check 'other' key
-              if !(new_definition.plural_translations[language] ||= {}).key? 'other'
-                new_definition.plural_translations[language]['other'] = value
+            forms = definition.plural_translation_for_lang(language)
+            if forms.nil? && !has_translation && include_option != :translated
+              fallbacks.each do |fallback|
+                forms = definition.plural_translation_for_lang(fallback)
+                break unless forms.nil?
               end
+            end
+            if forms
+              forms['other'] = value unless forms.key?('other')
+              new_definition.plural_translations[language] = forms
+              new_definition.translations[language] = forms['other']
             end
 
             new_section.definitions << new_definition

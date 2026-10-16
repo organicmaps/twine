@@ -150,7 +150,7 @@ module Twine
 
       def format_definition(definition, lang)
         formatted_definition = [format_comment(definition, lang)]
-        if self.class::SUPPORTS_PLURAL && definition.is_plural?
+        if self.class::SUPPORTS_PLURAL && definition.plural_translation_for_lang(lang)
           formatted_definition << format_plural(definition, lang)
         else
           formatted_definition << format_key_value(definition, lang)

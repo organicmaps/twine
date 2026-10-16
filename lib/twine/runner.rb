@@ -236,6 +236,7 @@ module Twine
     end
 
     def validate_twine_file
+      @twine_file.validate_references
       total_definitions = 0
       all_keys = Set.new
       duplicate_keys = Set.new

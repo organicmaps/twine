@@ -102,7 +102,7 @@ module Twine
       end
 
       def should_include_definition(definition, lang)
-        return !definition.is_plural? && super
+        return !definition.plural_translation_for_lang(lang) && super
       end
     end
   end

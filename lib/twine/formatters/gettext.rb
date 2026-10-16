@@ -48,7 +48,7 @@ module Twine
       end
 
       def format_file(lang)
-        @default_lang = twine_file.language_codes[0]
+        @default_lang = @options[:developer_language] || twine_file.language_codes[0]
         result = super
         @default_lang = nil
         result
@@ -80,7 +80,7 @@ module Twine
       end
 
       def format_base_translation(definition)
-        "msgid \"#{escape_quotes(definition.translations[@default_lang])}\"\n"
+        "msgid \"#{escape_quotes(definition.translation_for_lang(@default_lang))}\"\n"
       end
 
       def format_value(value)
