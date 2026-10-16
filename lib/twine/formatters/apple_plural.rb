@@ -18,12 +18,12 @@ module Twine
       end
 
       def format_footer(lang)
-        footer = "</dict>\n</plist>"
+        "</dict>\n</plist>"
       end
 
       def format_file(lang)
         result = super
-        result += format_footer(lang)
+        result + format_footer(lang) if result
       end
 
       def format_header(lang)
@@ -157,7 +157,7 @@ module Twine
       end
 
       def should_include_definition(definition, lang)
-        return definition.is_plural? && definition.plural_translation_for_lang(lang)
+        return definition.plural_translation_for_lang(lang)
       end
     end
   end

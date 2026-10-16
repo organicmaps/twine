@@ -58,12 +58,25 @@ module Twine
 
     def plural_translation_for_lang(lang)
       if @plural_translations.has_key? lang
-        @plural_translations[lang].dup.sort_by { |key,_| TwineDefinition::PLURAL_KEYS.index(key) }.to_h
+        @plural_translations[lang].sort_by { |key,_| TwineDefinition::PLURAL_KEYS.index(key) }.to_h
+      elsif !@translations.key?(lang) && reference
+        # An explicit singular value overrides inherited plural forms.
+        reference.plural_translation_for_lang(lang)
       end
     end
 
     def is_plural?
-      !@plural_translations.empty?
+      !@plural_translations.empty? || (reference ? reference.is_plural? : false)
+    end
+
+    private
+
+    def initialize_copy(other)
+      super
+      # Output processing adds fallbacks, so each copy owns its mutable maps.
+      @translations = other.translations.dup
+      @plural_translations = other.plural_translations.transform_values(&:dup)
+      @tags = other.tags.dup if other.tags
     end
   end
 
@@ -194,10 +207,30 @@ module Twine
         end
       end
 
-      # resolve_references
       @definitions_by_key.each do |key, definition|
         next unless definition.reference_key
-        definition.reference = @definitions_by_key[definition.reference_key]
+        definition.reference = @definitions_by_key.fetch(definition.reference_key) do
+          raise Twine::Error, "Unknown reference '#{definition.reference_key}' in [#{key}]"
+        end
+      end
+      validate_references
+    end
+
+    # Check the graph once before inherited lookups traverse it.
+    def validate_references
+      finished = {}
+      @definitions_by_key.each_value do |definition|
+        current = definition
+        path = {}
+        while current && !finished.key?(current)
+          raise Twine::Error, "Circular reference at [#{current.key}]" if path.key?(current)
+          if current.reference_key && current.reference.nil?
+            raise Twine::Error, "Unknown reference '#{current.reference_key}' in [#{current.key}]"
+          end
+          path[current] = true
+          current = current.reference
+        end
+        finished.merge!(path)
       end
     end
 
