@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from twine.output_processor import OutputProcessor
 from twine.twine_file import TwineDefinition, TwineFile, TwineSection
 
 
@@ -221,6 +222,49 @@ class TestTwineFileReader:
         assert twine_file.definitions_by_key["value_wrapped_by_accents"].translations["en"] == '`value`'
 
 class TestTwineFileOptimizations:
+    @pytest.mark.parametrize(
+        ("content", "fallback_to_default"),
+        [
+            ("[bridge]\nen = Bridge\nzh-Hans = 桥\n"
+             "[pedestrian]\nref = bridge\nen = Pedestrian Bridge\n"
+             "zh = 人行桥\nzh-CN = 人行桥\n", False),
+            ("[bridge]\nen = Bridge\nfr = Pont\n"
+             "[pedestrian]\nref = bridge\nen = Pedestrian Bridge\n"
+             "fr-CA = Pedestrian Bridge\n", True),
+            ("[bridge]\nen = Bridge\nfr = Pont\nfr-CA = Pont\n"
+             "[pedestrian]\nref = bridge\nfr = Passerelle\n", False),
+            ("[bridge]\nfr-CA = Pont\nfr = Pont\nen = Bridge\n", True),
+        ],
+        ids=["inherited-script", "inherited-generic", "alias-consumer", "regional-developer"],
+    )
+    def test_optimization_preserves_generated_translations(
+        self, tmp_path, content, fallback_to_default
+    ):
+        path = tmp_path / "strings.txt"
+        path.write_text(content, encoding="utf-8")
+        twine_file = TwineFile(fallback_to_default=fallback_to_default)
+        twine_file.read(str(path))
+        languages = [*twine_file.language_codes, "de", "fr-CA", "zh-CN"]
+
+        def translations(source):
+            processor = OutputProcessor(source, {"include": "all"})
+            return {
+                language: {
+                    key: definition.translations[language]
+                    for key, definition in processor.process(language).definitions_by_key.items()
+                }
+                for language in languages
+            }
+
+        expected = translations(twine_file)
+        twine_file.optimize_duplicates()
+        assert translations(twine_file) == expected
+
+        twine_file.write(str(path))
+        restored = TwineFile()
+        restored.read(str(path))
+        assert translations(restored) == expected
+
     @pytest.fixture
     def fixture_twine_file(self) -> TwineFile:
         twine_file = TwineFile()

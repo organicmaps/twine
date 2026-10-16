@@ -217,20 +217,36 @@ class TwineFile:
         return None
 
     def optimize_duplicates(self):
-        # Check if translation matches value from 'ref' definition.
+        """Remove translations only when their effective fallback is identical."""
+        referenced = {
+            definition.reference for definition in self.definitions_by_key.values()
+            if definition.reference is not None
+        }
+        developer_language = self.get_developer_language_code()
         for key, definition in self.definitions_by_key.items():
-            if definition.reference is not None:
-                ref = definition.reference
-                definition.translations = {lang:value for lang, value in definition.translations.items()
-                                           if lang not in ref.translations or ref.translations[lang] != value}
+            # Apply deletions one at a time so subsequent comparisons see the
+            # translations that will actually remain available.
+            for lang, value in list(definition.translations.items()):
+                inherited = (
+                    definition.reference.translation_for_lang(lang)
+                    if definition.reference is not None else None
+                )
+                if inherited is not None:
+                    if inherited == value:
+                        del definition.translations[lang]
+                    continue
 
-        """ Some regional languages have common items. Such as 'en-GB' and 'en'.
-            Deduplication: for each item and each language search the same translations
-            within fallback languages. Not all languages have fallbacks.
-        """
-        for key, definition in self.definitions_by_key.items():
-            definition.translations = {lang:value for (lang, value) in definition.translations.items() \
-                                       if not self.match_fallback_lang(definition.translations, lang, key, value)}
+                # Aliases inherit exact-language values, without regional
+                # fallback. The developer language is also a terminal fallback.
+                if definition in referenced or lang == developer_language:
+                    continue
+                fallback = definition.translation_for_lang(
+                    self.fallback_languages(lang, self.fallback_to_default)
+                )
+                if fallback == value:
+                    print(f"Warning: key '{key}' in lang '{lang}' matches its fallback translation")
+                    del definition.translations[lang]
+
             definition.plural_translations = {lang:value for (lang, value) in definition.plural_translations.items() \
                                               if not self.match_fallback_lang(definition.plural_translations, lang, key, value)}
 
