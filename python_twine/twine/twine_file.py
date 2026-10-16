@@ -2,18 +2,12 @@
 Core data models for Twine.
 """
 
-import copy
 import re
 from typing import Any
 
-FALLBACK_LANGS_MAPPING = {
-    "zh-CN": "zh-Hans",  # Chinese Simplified
-    "zh-TW": "zh-Hant",  # Chinese Taiwan    -> Chinese Traditional
-    "zh-MO": "zh-Hant",  # Chinese Macau     -> Chinese Traditional
-    "zh-HK": "zh-Hant",  # Chinese Hong Kong -> Chinese Traditional
-}
+from twine import TwineError
+from twine.languages import fallback_languages
 
-REGIONAL_LANG_REGEX = re.compile(r"([a-zA-Z]{2})-[a-zA-Z]+")
 
 class TwineDefinition:
     """Represents a single translatable string definition."""
@@ -111,13 +105,6 @@ class TwineDefinition:
             return self.reference.translation_for_lang(lang)
         return None
 
-    def find_plural_lang_fallback(self, fallback_langs: list[str]) -> str | None:
-        """ Find first language from `fallback_langs` which is in plural_translations. """
-        return next(
-            filter(lambda lng: lng in self.plural_translations,
-                   fallback_langs),
-            None)
-
     def plural_translation_for_lang(self, lang: str) -> dict[str, str] | None:
         """
         Get plural translations for a language, sorted by PLURAL_KEYS order.
@@ -129,7 +116,7 @@ class TwineDefinition:
             Ordered dict of plural translations or None
         """
         if lang in self.plural_translations:
-            plural_trans = self.plural_translations[lang].copy()
+            plural_trans = self.plural_translations[lang]
             # Sort by PLURAL_KEYS order
             return dict(
                 sorted(
@@ -141,25 +128,16 @@ class TwineDefinition:
                     ),
                 )
             )
+        # An explicit singular value overrides plural forms from a reference.
+        if lang not in self.translations and self.reference is not None:
+            return self.reference.plural_translation_for_lang(lang)
         return None
 
     def is_plural(self) -> bool:
-        """Check if this definition has plural translations."""
-        return bool(self.plural_translations)
-
-    def copy_lang(self, lang: str) -> "TwineDefinition":
-        """ Copy translation for one language into new definition. """
-        new_def = TwineDefinition(self.key)
-        new_def._comment = self.comment
-        new_def.tags = copy.deepcopy(self.tags)
-        if lang in self.translations:
-            new_def.translations[lang] = self.translations[lang]
-
-        if lang in self.plural_translations:
-            new_def.plural_translations[lang] = self.plural_translations[lang]
-        return new_def
-
-
+        """Check whether this definition or its reference supplies plural forms."""
+        return bool(self.plural_translations) or (
+            self.reference is not None and self.reference.is_plural()
+        )
 class TwineSection:
     """Represents a section grouping multiple definitions."""
 
@@ -171,23 +149,8 @@ class TwineSection:
 class TwineFile:
     """Main Twine data file containing sections and definitions."""
 
-    def __init__(self, fallback_to_default:bool = False):
-        """
-        :param fallback_to_default: indicates if TwineFile optimization should deduplicate
-               languages matching default (English) value.
-
-               For example in next strings 'es' should not be removed (fallback_to_default = False)
-               [bar]
-               en = Bar
-               es = Bar
-               uk = Bar
-
-               While in next sample all languages except 'en' should be removed (fallback_to_default = True)
-               [take_exit_number_street_verb]
-               en = NULL
-               de = NULL
-               nl = NULL
-        """
+    def __init__(self, fallback_to_default: bool = False):
+        """Control whether deduplication also compares with the developer language."""
         self.sections: list[TwineSection] = []
         self.definitions_by_key: dict[str, TwineDefinition] = {}
         self.language_codes: list[str] = []
@@ -227,12 +190,14 @@ class TwineFile:
             # Apply deletions one at a time so subsequent comparisons see the
             # translations that will actually remain available.
             for lang, value in list(definition.translations.items()):
+                forms = definition.plural_translation_for_lang(lang)
                 inherited = (
                     definition.reference.translation_for_lang(lang)
                     if definition.reference is not None else None
                 )
                 if inherited is not None:
-                    if inherited == value:
+                    # Equal text can still be a singular override of inherited plurals.
+                    if inherited == value and forms == definition.reference.plural_translation_for_lang(lang):
                         del definition.translations[lang]
                     continue
 
@@ -240,12 +205,15 @@ class TwineFile:
                 # fallback. The developer language is also a terminal fallback.
                 if definition in referenced or lang == developer_language:
                     continue
-                fallback = definition.translation_for_lang(
-                    self.fallback_languages(lang, self.fallback_to_default)
-                )
-                if fallback == value:
-                    print(f"Warning: key '{key}' in lang '{lang}' matches its fallback translation")
-                    del definition.translations[lang]
+                for fallback_lang in self.fallback_languages(lang, self.fallback_to_default):
+                    fallback = definition.translation_for_lang(fallback_lang)
+                    fallback_forms = definition.plural_translation_for_lang(fallback_lang)
+                    if fallback is None and fallback_forms is None:
+                        continue
+                    if fallback == value and forms == fallback_forms:
+                        print(f"Warning: key '{key}' in lang '{lang}' matches its fallback translation")
+                        del definition.translations[lang]
+                    break
 
             definition.plural_translations = {lang:value for (lang, value) in definition.plural_translations.items() \
                                               if not self.match_fallback_lang(definition.plural_translations, lang, key, value)}
@@ -254,36 +222,17 @@ class TwineFile:
         # TODO: this method is invoked for each key and lang. Optimize: cache all fallback languages in a dict
         for fallback_lang in self.fallback_languages(lang, self.fallback_to_default):
             if translations.get(fallback_lang) == value:
+                if isinstance(value, str):
+                    definition = self.definitions_by_key[key]
+                    if definition.plural_translation_for_lang(lang) != definition.plural_translation_for_lang(fallback_lang):
+                        continue
                 print(f"Warning: key '{key}' in lang '{lang}' matches value from fallback language '{fallback_lang}'")
                 return True
         return False
 
     def fallback_languages(self, language: str, include_default:bool = False) -> list[str]:
-        fallbacks = []
-
-        # Check specific mapping
-        if language in FALLBACK_LANGS_MAPPING:
-            fallbacks.append(FALLBACK_LANGS_MAPPING[language])
-
-        # Regional dialect fallbacks to generic language
-        # e.g., 'es-MX' -> 'es', 'pt-BR' -> 'pt'
-        match = REGIONAL_LANG_REGEX.match(language)
-        if match:
-            generic_language = match.group(1)
-            fallbacks.append(generic_language)
-
-        if include_default and language != self.get_developer_language_code():
-            fallbacks.append(self.get_developer_language_code())
-
-        # Remove duplicates while preserving order
-        seen = set()
-        result = []
-        for lang in fallbacks:
-            if lang not in seen:
-                seen.add(lang)
-                result.append(lang)
-
-        return result
+        default = self.get_developer_language_code() if include_default else None
+        return fallback_languages(language, default)
 
     def read(self, path: str):
         """
@@ -293,11 +242,9 @@ class TwineFile:
             path: Path to the Twine file
 
         Raises:
-            TwineError: If file doesn't exist or parsing fails
+            TwineError: If the file is missing, malformed, or has invalid references.
         """
         from pathlib import Path
-
-        from twine import TwineError
 
         file_path = Path(path)
         if not file_path.is_file():
@@ -384,8 +331,6 @@ class TwineFile:
                         parsed = True
 
                 if not parsed:
-                    from twine import TwineError
-
                     raise TwineError(
                         f"Unable to parse line {line_num} of {path}: {line}"
                     )
@@ -393,9 +338,30 @@ class TwineFile:
         # Resolve references
         for key, definition in self.definitions_by_key.items():
             if definition.reference_key:
-                definition.reference = self.definitions_by_key.get(
-                    definition.reference_key
-                )
+                try:
+                    definition.reference = self.definitions_by_key[definition.reference_key]
+                except KeyError:
+                    raise TwineError(
+                        f"Unknown reference '{definition.reference_key}' in [{key}]"
+                    ) from None
+        self.validate_references()
+
+    def validate_references(self):
+        """Reject dangling references and cycles before inherited lookups run."""
+        finished = set()
+        for definition in self.definitions_by_key.values():
+            current = definition
+            path = set()
+            while current is not None and current not in finished:
+                if current in path:
+                    raise TwineError(f"Circular reference at [{current.key}]")
+                if current.reference_key is not None and current.reference is None:
+                    raise TwineError(
+                        f"Unknown reference '{current.reference_key}' in [{current.key}]"
+                    )
+                path.add(current)
+                current = current.reference
+            finished.update(path)
 
     def write(self, path: str):
         """
