@@ -10,8 +10,12 @@ from twine.formatters import AbstractFormatter
 
 COMMENT_REGEX = re.compile(r'#\.\s*"(.*)"$', re.MULTILINE)
 SECTION_REGEX = re.compile(r'# SECTION: (.+)$', re.MULTILINE)
-KEY_REGEX = re.compile(r'msgctxt\s+"(.*)"$', re.MULTILINE)
-VALUE_REGEX = re.compile(r'msgid\s+"(.*)"$', re.MULTILINE)
+KEY_REGEX = re.compile(r'^[ \t]*msgctxt[ \t]+"((?:[^"\\]|\\.)*)"[ \t]*$', re.MULTILINE)
+FLAGS_REGEX = re.compile(r'^#,(.*)$', re.MULTILINE)
+VALUE_REGEX = re.compile(
+    r'^[ \t]*msgstr[ \t]+("(?:[^"\\]|\\.)*"[ \t]*(?:\n[ \t]*"(?:[^"\\]|\\.)*"[ \t]*)*)',
+    re.MULTILINE,
+)
 
 
 class GettextFormatter(AbstractFormatter):
@@ -33,9 +37,8 @@ class GettextFormatter(AbstractFormatter):
     def read(self, io: TextIO, lang: str):
         """Read Gettext .po file."""
 
-        # Read file in chunks separated by double newlines
-        content = io.read()
-        items = content.split("\n\n")
+        content = io.read().replace("\r\n", "\n")
+        items = re.split(r"\n[ \t]*\n", content)
         current_sections = None
 
         for item in items:
@@ -56,20 +59,23 @@ class GettextFormatter(AbstractFormatter):
             if section_match:
                 current_sections = section_match.group(1)
 
+            # Fuzzy entries need translator approval before they can be used.
+            flags = {flag.strip() for line in FLAGS_REGEX.findall(item) for flag in line.split(",")}
+            if "fuzzy" in flags:
+                continue
+
             # Extract key (msgctxt)
             key_match = KEY_REGEX.search(item)
             if key_match:
                 key = key_match.group(1).replace('\\"', '"')
 
-            # Extract value (msgid)
+            # msgid is the source text; msgstr and its continuations are the translation.
             value_match = VALUE_REGEX.search(item)
             if value_match:
-                # Handle multiline strings: "string"\n"continuation"
-                value = value_match.group(1)
-                value = re.sub(r'"\s*\n\s*"', "", value)
+                value = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', value_match.group(1)))
                 value = value.replace('\\"', '"')
 
-            # Set translation if we have both key and value
+            # An empty msgstr denotes an untranslated PO entry.
             if key and value:
                 self.set_translation_for_key(key, lang, value, current_sections)
 
@@ -78,8 +84,7 @@ class GettextFormatter(AbstractFormatter):
 
     def format_file(self, lang: str) -> str | None:
         """Format file, tracking default language."""
-        if self.twine_file.language_codes:
-            self.default_lang = self.twine_file.language_codes[0]
+        self.default_lang = self.options.get("developer_language") or self.twine_file.get_developer_language_code()
 
         result = super().format_file(lang)
         self.default_lang = None
@@ -88,8 +93,9 @@ class GettextFormatter(AbstractFormatter):
     def format_header(self, lang: str) -> str:
         """Generate .po file header."""
         header = 'msgid ""\nmsgstr ""\n'
-        header += f'"Language: {lang}"\n'
-        header += f'"X-Generator: Twine {__version__}"\n'
+        header += f'"Language: {lang}\\n"\n'
+        header += '"Content-Type: text/plain; charset=UTF-8\\n"\n'
+        header += f'"X-Generator: Twine {__version__}\\n"\n'
         return header
 
     def format_section_header(self, section) -> str:
@@ -102,7 +108,8 @@ class GettextFormatter(AbstractFormatter):
             return False
 
         if self.default_lang:
-            return definition.translation_for_lang(self.default_lang) is not None
+            original = self.twine_file.definitions_by_key[definition.key]
+            return original.translation_for_lang(self.default_lang) is not None
 
         return True
 
@@ -140,7 +147,8 @@ class GettextFormatter(AbstractFormatter):
     def format_base_translation(self, definition) -> str:
         """Format msgid line with default language translation."""
         if self.default_lang:
-            base_value = definition.translations.get(self.default_lang, "")
+            original = self.twine_file.definitions_by_key[definition.key]
+            base_value = original.translation_for_lang(self.default_lang)
             escaped = self.escape_quotes(base_value)
             return f'msgid "{escaped}"\n'
         return 'msgid ""\n'

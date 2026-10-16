@@ -318,8 +318,7 @@ class TestGettextFormatter(FormatterTestData):
         with open(fixture_path, "r", encoding="utf-8") as f:
             formatter.read(f, "en")
 
-        # Should have read multiline string correctly
-        assert len(formatter.twine_file.definitions_by_key) > 0
+        assert formatter.twine_file.definitions_by_key["key1"].translations["en"] == "multiline\\nstring"
 
 class TestDjangoFormatter(FormatterTestData):
     """Test Django .po formatter."""
