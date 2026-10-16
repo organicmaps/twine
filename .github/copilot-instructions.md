@@ -11,7 +11,7 @@ The Python version is a modern port of the Ruby codebase:
 - **TwineDefinition**: Translatable string with key, translations dict, tags, comments, references
 - **TwineSection**: Groups related definitions
 - **AbstractFormatter** (`twine/formatters/__init__.py`): ABC base class for all formatters
-- Uses Python 3.12+ type hints, pathlib, and dataclass patterns
+- Uses Python 3.12+ type hints, pathlib, and explicit model classes
 
 ### Command Flow
 1. `CLI.parse()` (argparse) → `Runner.run()` → command method
@@ -21,7 +21,8 @@ The Python version is a modern port of the Ruby codebase:
 
 ### Key Modules
 - `twine/placeholders.py`: Printf-style placeholder conversion (`%@` → `%s`, `{0}`, etc.)
-- `twine/output_processor.py`: Tag filtering, language fallback (zh-CN → zh-Hans → en)
+- `twine/languages.py`: Shared language fallback order (zh-CN → zh-Hans → zh → developer language)
+- `twine/output_processor.py`: Tag filtering and selection of text and plural forms into independent output definitions
 - `twine/encoding.py`: BOM detection (UTF-16BE/LE)
 - `twine/cli.py`: Argparse-based CLI with subcommands
 - `twine/runner.py`: Command orchestration
@@ -68,7 +69,7 @@ Original implementation still maintained:
 
 ### Language Code Patterns
 - Primary language is `twine_file.language_codes[0]` (developer language)
-- Use `LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE` regex: `[a-z]{2}(?:-[A-Za-z]{2})?`
+- Use `LANGUAGE_CODE_WITH_OPTIONAL_REGION_CODE` regex: `[a-z]{2,3}(?:-[A-Za-z]{2,4})?`
 - Handle platform-specific mapping (Android: `values-en-rUS`, iOS: `en.lproj`)
 - Fallback chain: specific mapping (zh-CN → zh-Hans) → generic (es-MX → es) → default
 
@@ -113,7 +114,8 @@ end
 - `twine/__init__.py`: Package init, version, TwineError exception
 - `twine/cli.py`: Argparse-based CLI with subcommands
 - `twine/runner.py`: Command execution orchestration
-- `twine/output_processor.py`: Filtering and tag-based processing
+- `twine/languages.py`: Fallback language order shared by generation and deduplication
+- `twine/output_processor.py`: Filtering and language-specific text and plural selection
 - `twine/placeholders.py`: Format-specific placeholder conversion
 - `pyproject.toml`: Modern Python packaging
 
