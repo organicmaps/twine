@@ -39,7 +39,7 @@ class TestQtFormatterBasics:
     def test_format_name(self, formatter):
         assert formatter.format_name() == "qt"
         assert formatter.extension() == ".ts"
-        assert formatter.default_file_name() == "omim.ts"
+        assert formatter.default_file_name() == "organicmaps.ts"
 
     def test_output_path_for_language(self, formatter):
         assert formatter.output_path_for_language("ru") == "ru"

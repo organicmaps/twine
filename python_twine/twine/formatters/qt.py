@@ -45,7 +45,7 @@ class QtFormatter(AbstractFormatter):
         return ".ts"
 
     def default_file_name(self) -> str:
-        return "omim.ts"
+        return "organicmaps.ts"
 
     def output_path_for_language(self, lang: str) -> str:
         return lang
