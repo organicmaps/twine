@@ -4,7 +4,7 @@ Twine is a command line tool for managing your strings and their translations. T
 
 ## Install
 
-Twine is most easily installed as a Gem.
+Twine requires Ruby 3.4 or newer and is most easily installed as a Gem.
 
 ```sh
 gem install twine
