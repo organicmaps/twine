@@ -16,7 +16,7 @@ from xml.etree import ElementTree as ET
 from twine import TwineError
 from twine.formatters import AbstractFormatter
 from twine.formatters.qt_plural_rules import get_qt_numerus_forms
-from twine.placeholders import PLACEHOLDER_REGEX
+from twine.placeholders import PLACEHOLDER_REGEX, number_of_twine_placeholders
 from twine.twine_file import TwineDefinition
 
 # A "count-eligible" placeholder consumes a numeric argument: %d, %i, %u,
@@ -115,11 +115,13 @@ class QtFormatter(AbstractFormatter):
         value = definition.translation_for_lang(lang)
         if value is None:
             return None
+        source = self._developer_value(definition)
+        has_placeholders = number_of_twine_placeholders(source) > 0
         return self.key_value_pattern() % {
             "key": self._escape(definition.key),
             "comment": self._format_extracomment(definition),
-            "source": self._format_source(definition),
-            "value": self.format_value(value),
+            "source": self.format_value(source, has_placeholders),
+            "value": self.format_value(value, has_placeholders),
         }
 
     def _format_extracomment(self, definition: TwineDefinition) -> str:
@@ -131,15 +133,15 @@ class QtFormatter(AbstractFormatter):
             return ""
         return f"\n<extracomment>{self._escape(comment)}</extracomment>"
 
-    def _format_source(self, definition: TwineDefinition) -> str:
-        """<source> is the developer-language string with placeholders mapped
-        to Qt %1/%2 form. Falls back to the key if no developer translation
-        exists. Reads from the original (unprocessed) twine_file since the
-        OutputProcessor strips non-target translations from the copy."""
+    def _developer_value(self, definition: TwineDefinition) -> str:
+        """The developer-language string, used as <source>. Falls back to the
+        key if no developer translation exists. Reads from the original
+        (unprocessed) twine_file since the OutputProcessor strips non-target
+        translations from the copy."""
         default_lang = self.twine_file.get_developer_language_code()
         original = self.twine_file.definitions_by_key.get(definition.key, definition)
         value = original.translation_for_lang(default_lang) if default_lang else None
-        return self.format_value(value if value is not None else definition.key)
+        return value if value is not None else definition.key
 
     # ---- plural ------------------------------------------------------------
 
@@ -228,10 +230,13 @@ class QtFormatter(AbstractFormatter):
 
     # ---- value formatting --------------------------------------------------
 
-    def format_value(self, value: str) -> str:
-        """Non-plural value: sequential %@/%d → %1, %2, …; preserve numbered
-        forms; restore real newlines; escape XML and boundary spaces."""
-        converted = self._convert_placeholders_sequential(value).replace("\\n", "\n")
+    def format_value(self, value: str, has_placeholders: bool = True) -> str:
+        """Non-plural value: sequential %@/%d → %1, %2, … if it has
+        placeholders; preserve numbered forms; restore real newlines; escape
+        XML and boundary spaces."""
+        if has_placeholders:
+            value = self._convert_placeholders_sequential(value)
+        converted = value.replace("\\n", "\n")
         return self._escape_boundary_spaces(self._escape(converted))
 
     def _convert_plural_value(self, value: str) -> str:

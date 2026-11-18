@@ -113,6 +113,22 @@ class TestQtFormatterWrite:
         output = formatter.format_file("en")
         assert "<translation>First %1, then %2, finally %1</translation>" in output
 
+    def test_url_escape_without_placeholders_preserved(self, formatter):
+        twine_file = TwineFile()
+        twine_file.language_codes = ["en", "nl"]
+        section = TwineSection("Links")
+        twine_file.sections.append(section)
+
+        url = TwineDefinition("osm_wiki_about_url")
+        url.translations["en"] = "https://wiki.openstreetmap.org/wiki/About_OpenStreetMap"
+        url.translations["nl"] = "https://wiki.openstreetmap.org/wiki/NL:Wat_is_OpenStreetMap%3F"
+        twine_file.definitions_by_key["osm_wiki_about_url"] = url
+        section.definitions.append(url)
+
+        formatter.twine_file = twine_file
+        output = formatter.format_file("nl")
+        assert "<translation>https://wiki.openstreetmap.org/wiki/NL:Wat_is_OpenStreetMap%3F</translation>" in output
+
     def test_newlines_preserved(self, formatter):
         twine_file = TwineFile()
         twine_file.language_codes = ["en"]
